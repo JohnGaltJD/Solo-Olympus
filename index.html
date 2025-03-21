@@ -143,16 +143,18 @@
             <header class="dashboard-header">
                 <h1>Zeus Dashboard: Overseeing Mount Olympus</h1>
                 <div class="dashboard-actions">
-                    <button id="manual-sync-btn" class="sync-now-btn action-btn" onclick="DataManager.manualSync()">
-                        <i class="fa fa-refresh"></i> Force Cloud Sync
+                    <button id="force-cloud-sync-btn" class="action-btn">
+                        <i class="fa fa-cloud-download"></i> Force Cloud Sync
                     </button>
                 </div>
             </header>
             
             <div class="top-bar">
-                <div class="connection-status offline">🔴 Using local storage (offline)</div>
+                <div class="connection-status offline">
+                    <i class="fa fa-exclamation-triangle"></i> Offline
+                </div>
                 <div class="top-bar-actions">
-                    <button id="manual-sync-btn" class="sync-now-btn action-btn" onclick="DataManager.manualSync()">
+                    <button id="parent-sync-btn" class="sync-now-btn action-btn">
                         <i class="fa fa-refresh"></i> Force Sync
                     </button>
                     <button id="parent-logout-btn" class="logout-btn">Logout</button>
@@ -327,11 +329,13 @@
             <header class="dashboard-header">
                 <h1>Hermes Dashboard: Treasury of Olympus</h1>
                 <div class="header-controls">
-                    <div id="child-firebase-status" class="firebase-status">Checking connection...</div>
+                    <div id="child-firebase-status" style="display: none;">Checking connection...</div>
                     <div class="top-bar">
-                        <div class="connection-status offline">🔴 Using local storage (offline)</div>
+                        <div class="connection-status offline">
+                            <i class="fa fa-exclamation-triangle"></i> Offline
+                        </div>
                         <div class="top-bar-actions">
-                            <button id="child-manual-sync-btn" class="sync-now-btn action-btn" onclick="DataManager.manualSync()">
+                            <button id="child-sync-btn" class="sync-now-btn action-btn">
                                 <i class="fa fa-refresh"></i> Force Sync
                             </button>
                             <button id="child-logout-btn" class="logout-btn">Logout</button>

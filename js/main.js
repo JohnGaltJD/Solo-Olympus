@@ -68,52 +68,64 @@ document.addEventListener('DOMContentLoaded', function() {
  * Initialize sync buttons functionality
  */
 function initSyncButtons() {
-    // Get all sync buttons
-    const syncButtons = document.querySelectorAll('.sync-now-btn');
+    // Get all sync buttons by their specific IDs
+    const syncButtons = [
+        document.getElementById('parent-sync-btn'),
+        document.getElementById('child-sync-btn'),
+        document.getElementById('force-cloud-sync-btn'),
+        document.getElementById('force-sync-btn')
+    ];
     
-    syncButtons.forEach(button => {
-        button.addEventListener('click', function() {
+    // Filter out any null elements (buttons that don't exist)
+    const validButtons = syncButtons.filter(button => button !== null);
+    
+    validButtons.forEach(button => {
+        // Remove any existing event listeners
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        // Add click handler
+        newButton.addEventListener('click', function(event) {
+            // Prevent default
+            event.preventDefault();
+            
             // Show loading state
-            const syncIcon = this.querySelector('.fa-refresh');
+            const syncIcon = this.querySelector('.fa-refresh, .fa-cloud-download');
             if (syncIcon) {
                 syncIcon.classList.add('fa-spin');
             }
             this.disabled = true;
             
+            console.log(`Sync button clicked: ${this.id}`);
+            
             // Call DataManager's sync method
-            DataManager.manualSync()
-                .then(result => {
-                    // Success
-                    console.log("Sync completed successfully");
-                    // Use UIManager if available
-                    if (window.UIManager && typeof UIManager.showToast === 'function') {
-                        UIManager.showToast('Sync completed successfully!', 'success');
-                    } else {
-                        alert('Sync completed successfully!');
-                    }
-                })
-                .catch(error => {
-                    // Error
-                    console.error("Sync failed:", error);
-                    // Use UIManager if available
-                    if (window.UIManager && typeof UIManager.showToast === 'function') {
-                        UIManager.showToast('Sync failed: ' + error.message, 'error');
-                    } else {
-                        alert('Sync failed: ' + error.message);
-                    }
-                })
-                .finally(() => {
-                    // Reset button state
-                    if (syncIcon) {
-                        syncIcon.classList.remove('fa-spin');
-                    }
-                    this.disabled = false;
-                    
-                    // Update connection status
-                    if (window.updateConnectionStatus) {
-                        window.updateConnectionStatus();
-                    }
-                });
+            if (window.DataManager && typeof DataManager.manualSync === 'function') {
+                DataManager.manualSync()
+                    .then(result => {
+                        // Success - handled in DataManager.manualSync
+                        console.log("Sync completed successfully");
+                    })
+                    .catch(error => {
+                        // Error - should be handled in DataManager.manualSync
+                        console.error("Sync failed:", error);
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        if (syncIcon) {
+                            syncIcon.classList.remove('fa-spin');
+                        }
+                        this.disabled = false;
+                    });
+            } else {
+                console.error("DataManager.manualSync is not available");
+                if (syncIcon) {
+                    syncIcon.classList.remove('fa-spin');
+                }
+                this.disabled = false;
+                alert('Sync function not available. Please reload the page and try again.');
+            }
         });
     });
+    
+    console.log("Sync buttons initialized:", validButtons.length);
 } 
