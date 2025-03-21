@@ -106,6 +106,55 @@ The Family Mount Olympus Bank now uses Firebase Firestore for data storage, whic
    - This code will be used to identify your family's data in Firebase
    - Share this code with family members so they can access the same data
 
+### Cross-Device Synchronization
+
+The app includes features to ensure consistent data across all family devices:
+
+1. **Automatic Synchronization**
+   - Changes made on one device automatically sync to Firebase
+   - Other devices receive these updates in real-time when connected
+   - No manual setup required beyond entering the same family code
+
+2. **Force Cloud Sync Feature**
+   - Found in the Settings tab (Parent/Zeus view)
+   - Use this if different devices show inconsistent data
+   - This button forces the current device to pull the latest data from Firebase
+   - All family members should use the same family code for this to work
+
+3. **Best Practices for Multi-Device Usage**
+   - Always wait a few seconds after making changes before checking other devices
+   - Ensure all devices have a stable internet connection
+   - If data appears inconsistent, use the Force Cloud Sync button
+   - Only one family member should make changes at a time when possible
+
+### Troubleshooting Synchronization Issues
+
+If family members report seeing different data across devices:
+
+1. **First Steps**
+   - Verify all devices are using the same family code
+   - Check internet connectivity on all devices
+   - Wait a few minutes for automatic synchronization
+
+2. **Using Force Cloud Sync**
+   - Log in as Zeus (parent) on the device with issues
+   - Go to the Settings tab
+   - Under Account Management, click "Force Cloud Sync"
+   - This will pull the latest data from Firebase to that device
+
+3. **Common Issues and Solutions**
+   - **Issue**: New transactions don't appear on other devices
+     **Solution**: Use Force Cloud Sync, or wait a few minutes for auto-sync
+
+   - **Issue**: Balance amounts differ across devices
+     **Solution**: Use Force Cloud Sync on all devices to ensure consistency
+
+   - **Issue**: Changes made offline not appearing
+     **Solution**: Connect to the internet and use Force Cloud Sync
+
+   - **Issue**: Synchronization conflicts
+     **Solution**: The most recently saved data usually takes precedence; use Force Cloud Sync to resolve
+
 ### Security Considerations
 
 1. Since the application now uses cloud storage, consider the following:
@@ -123,18 +172,20 @@ The Family Mount Olympus Bank now uses Firebase Firestore for data storage, whic
 
 1. **Enhance Firebase Integration**
    - Implement proper user authentication
-   - Add real-time data synchronization
+   - Further improve real-time data synchronization
    - Create multiple user accounts with different permission levels
 
 2. **Data Management**
    - Add data backup/export functionality
    - Implement more sophisticated conflict resolution for multi-device usage
    - Add version history for transactions
+   - Add a synchronization status indicator
 
 ## Need Help?
 
-If you need assistance with hosting, consider:
+If you need assistance with hosting or synchronization issues, consider:
 
 1. Hiring a freelance web developer for a few hours
 2. Using a website builder service with hosting included
-3. Posting specific questions on Stack Overflow or web hosting forums 
+3. Posting specific questions on Stack Overflow or web hosting forums
+4. Checking the browser console (F12) for any Firebase-related error messages 

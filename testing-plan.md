@@ -60,6 +60,18 @@
 - [ ] Export/import data functions
 - [ ] Data validation prevents corruption
 
+### Cross-Device Synchronization
+- [ ] New family code creation works on first device
+- [ ] Existing family code connection works on second device
+- [ ] Force Cloud Sync button functions correctly
+- [ ] Balance updates sync across devices
+- [ ] Transaction history syncs across devices
+- [ ] Chore updates sync across devices 
+- [ ] Goal updates sync across devices
+- [ ] Settings changes sync across devices
+- [ ] Syncing provides appropriate visual feedback
+- [ ] Cloud sync toast notifications appear correctly
+
 ## 3. Error Handling & Recovery Testing
 
 ### Automated Tests (Using test-error-handling.js)
@@ -76,6 +88,12 @@
 - [ ] Multiple tabs open simultaneously
 - [ ] Invalid data entry in forms
 - [ ] Browser storage limits reached
+- [ ] Conflicting data changes from multiple devices
+- [ ] Firebase temporary unavailability scenarios
+- [ ] Force sync during active transaction processing
+- [ ] Handling of multiple rapid synchronization requests
+- [ ] Recovery from failed synchronization attempts
+- [ ] Device clock/time inconsistencies affecting sync
 
 ## 4. Performance Testing
 
@@ -83,11 +101,15 @@
 - [ ] Initial page load under 2 seconds
 - [ ] Dashboard switch under 300ms
 - [ ] Transaction rendering under 100ms
+- [ ] Firebase initial sync speed
+- [ ] Force Cloud Sync performance under varied data sizes
 
 ### Resource Usage
 - [ ] Memory usage remains stable during extended use
 - [ ] CPU usage remains reasonable during animations
 - [ ] LocalStorage usage within reasonable limits
+- [ ] Network bandwidth consumption during sync operations
+- [ ] Battery impact of real-time Firebase listeners
 
 ## 5. Accessibility Testing
 
@@ -97,12 +119,14 @@
 - [ ] All interactive elements accessible via keyboard
 - [ ] ARIA attributes on custom controls
 - [ ] Screen reader compatibility
+- [ ] Synchronization status messages are accessible
 
 ### Responsive Design
 - [ ] Layout adapts appropriately to all test screen sizes
 - [ ] Touch targets sufficiently sized on mobile
 - [ ] No horizontal scrolling on supported devices
 - [ ] Text remains readable at all screen sizes
+- [ ] Force Cloud Sync button is easily accessible on all devices
 
 ## 6. Progressive Web App Testing
 
@@ -116,6 +140,7 @@
 - [ ] Service worker registers successfully
 - [ ] Performance improvements measurable
 - [ ] Updates handle correctly
+- [ ] Offline capability maintains basic functionality
 
 ## 7. Final Deployment Steps
 
@@ -124,6 +149,8 @@
 - [ ] Document parent controls and features
 - [ ] Document child interface features
 - [ ] Create backup/restore instructions
+- [ ] Document cross-device synchronization procedures
+- [ ] Include Force Cloud Sync instructions
 
 ### Deployment Options
 - [ ] Configure for home network hosting
@@ -135,12 +162,15 @@
   - Deploy to GitHub Pages
   - Test URL access from all family devices
   - Document access procedures
+  - Verify Firebase connectivity from all access points
 
 ### Security Considerations
 - [ ] Verify password protection functionality
 - [ ] Check for exposed sensitive data in code
 - [ ] Sanitize all user inputs
 - [ ] Test data recovery and backup procedures
+- [ ] Verify family code security and uniqueness
+- [ ] Ensure Firebase security rules are appropriate
 
 ## 8. User Training & Feedback
 
@@ -149,17 +179,21 @@
 - [ ] Demo chore management
 - [ ] Demo settings and parent controls
 - [ ] Explain backup procedures
+- [ ] Train on using Force Cloud Sync feature
+- [ ] Explain cross-device data management
 
 ### Child Training
 - [ ] Demo transaction requests
 - [ ] Demo chore completion
 - [ ] Demo saving goals creation
 - [ ] Explain rewards and progress tracking
+- [ ] Explain what to do if transactions don't appear
 
 ### Feedback Collection
 - [ ] Create feedback form/mechanism
 - [ ] Schedule initial feedback session after one week
 - [ ] Document feature requests for future versions
+- [ ] Gather specific feedback on cross-device experience
 
 ## 9. Implementation Checklist for Remaining Features
 
@@ -175,15 +209,19 @@
 - [ ] Implement lazy loading for non-critical resources
 - [ ] Minify production JS and CSS
 - [ ] Set appropriate cache headers in hosting
+- [ ] Optimize Firebase real-time listener usage
 
 ### Final User Experience Enhancements
 - [ ] Add instructional tooltips for first-time users
 - [ ] Improve visual feedback for loading states
 - [ ] Enhance transaction and chore completion animations
 - [ ] Add guided tour for first launch
+- [ ] Improve synchronization status indicators
 
 ### Family Deployment Preparation
 - [ ] Create backup of production version
 - [ ] Set default values for family account
 - [ ] Document IP/URL for accessing application
-- [ ] Create restore point for easy reset if needed 
+- [ ] Create restore point for easy reset if needed
+- [ ] Document family code for all family members
+- [ ] Test family access from all intended devices 

@@ -19,6 +19,14 @@ Welcome to your mythological family banking adventure! This guide will help you 
 4. Share this code with family members so they can access the same data
 5. Each family member should enter the same code on their device
 
+### Using Across Multiple Devices
+1. Use the same family code on all devices to access shared data
+2. All changes made on one device will automatically sync to others
+3. If data appears different across devices:
+   - Go to the "Settings" tab (as Zeus)
+   - Use the "Force Cloud Sync" button to ensure all devices show the same data
+4. Allow a few seconds for changes to appear across devices
+
 ## Parent Guide (Zeus)
 
 ### First Login
@@ -55,6 +63,12 @@ Welcome to your mythological family banking adventure! This guide will help you 
 1. View the "Quests" tab to see savings goals
 2. Review "Transaction History" to track financial activity
 3. Check "Labor History" to see completed chores
+
+### Managing Data Synchronization
+1. Go to the "Settings" tab
+2. Under "Account Management," find the "Force Cloud Sync" button
+3. Use this button if devices are showing different data
+4. This will ensure all devices show the same transactions and balances
 
 ## Child Guide (Hermes)
 
@@ -100,12 +114,20 @@ Welcome to your mythological family banking adventure! This guide will help you 
 - Celebrate financial milestones
 - Use the reason field to reinforce learning moments
 - Be consistent with labor rewards
+- Use the "Force Cloud Sync" if family members report seeing different data
 
 ### For Hermes (Children)
 - Check your dashboard regularly
 - Complete labors on time
 - Plan quests for things you really want
 - Watch your divine treasury grow through smart choices
+- If you don't see recent changes, ask Zeus to use "Force Cloud Sync"
+
+## Troubleshooting
+- **Different data on devices?** Ask Zeus to use the "Force Cloud Sync" button in Settings
+- **Changes not appearing?** Wait a few seconds for automatic synchronization
+- **Still having issues?** Make sure all devices are using the same family code
+- **Connection problems?** Check your internet connection and try again
 
 ## Need Help?
 - Look for the help icon (?) in each section for guidance
