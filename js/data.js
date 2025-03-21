@@ -54,17 +54,25 @@ const DataManager = {
             
             // Check if Firebase is available
             const useFirebase = window.firebase && window.db;
+            console.log('Firebase available:', useFirebase);
             
             // Set family ID - in a real app, this would be based on authentication
             this.familyId = localStorage.getItem('olympusBankFamilyId') || 'default-family';
+            console.log('Using family ID:', this.familyId);
             
             if (forceReset) {
                 console.log('Force reset requested, using default data');
                 this.data = JSON.parse(JSON.stringify(this.defaultData));
                 await this.saveData();
             } else {
-                // Restore data from Firebase or localStorage
-                await this.restoreData(useFirebase);
+                // If Firebase is available, prioritize Firebase data over localStorage
+                if (useFirebase) {
+                    console.log('Prioritizing Firebase data over localStorage');
+                    await this.forceSyncFromFirebase();
+                } else {
+                    // If Firebase is not available, fall back to regular data loading
+                    await this.restoreData(useFirebase);
+                }
             }
             
             // Set up real-time Firebase listener if Firebase is available
@@ -1460,6 +1468,106 @@ const DataManager = {
             return true;
         } catch (error) {
             console.error('[DATA SYNC] Error setting family ID:', error);
+            return false;
+        }
+    },
+    
+    /**
+     * Force synchronization from Firebase, ignoring local data
+     * This ensures the device has the most up-to-date data from the cloud
+     * @returns {Promise<boolean>} Success status
+     */
+    async forceSyncFromFirebase() {
+        try {
+            console.log('Forcing sync from Firebase...');
+            
+            // Check if Firebase is available
+            if (!window.firebase || !window.db) {
+                console.warn('Firebase not available, cannot force sync');
+                return false;
+            }
+            
+            // Try to get data from Firebase
+            const docRef = db.collection('families').doc(this.familyId);
+            const doc = await docRef.get();
+            
+            if (doc.exists) {
+                console.log('Found data in Firebase for family:', this.familyId);
+                const firestoreData = doc.data();
+                
+                // Validate the data structure
+                if (this.validateDataStructure(firestoreData)) {
+                    console.log('Firebase data is valid, using it');
+                    
+                    // Apply any necessary migrations
+                    const migratedData = this.migrateData(firestoreData);
+                    
+                    // Use the migrated data
+                    this.data = migratedData;
+                    
+                    // Store as last known good data
+                    this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                    
+                    // Clear localStorage and update it with Firebase data
+                    localStorage.setItem('olympusBank', JSON.stringify(this.data));
+                    
+                    console.log('Successfully synced data from Firebase');
+                    
+                    // Update UI if UIManager is available
+                    if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                        UIManager.refreshAllData();
+                        
+                        // Show a toast notification if available
+                        if (window.UIManager && typeof UIManager.showToast === 'function') {
+                            UIManager.showToast('Data synchronized from cloud!', 'success');
+                        }
+                    }
+                    
+                    return true;
+                } else {
+                    console.warn('Invalid data structure in Firebase');
+                    // Fall back to regular data loading
+                    await this.restoreData(true);
+                    return false;
+                }
+            } else {
+                console.log('No data found in Firebase for family:', this.familyId);
+                
+                // Check if there's data in localStorage
+                const localData = localStorage.getItem('olympusBank');
+                
+                if (localData) {
+                    try {
+                        // Parse and validate the local data
+                        const parsedData = JSON.parse(localData);
+                        
+                        if (this.validateDataStructure(parsedData)) {
+                            // If we have valid local data but no Firebase data,
+                            // use the local data and sync it to Firebase
+                            console.log('Using local data and syncing to Firebase');
+                            this.data = this.migrateData(parsedData);
+                            this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                            
+                            // Save to Firebase
+                            await this.saveData(true);
+                            return true;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing local data:', e);
+                    }
+                }
+                
+                // If no valid data found anywhere, use default data
+                console.log('Using default data');
+                this.data = JSON.parse(JSON.stringify(this.defaultData));
+                this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                await this.saveData(true);
+                return true;
+            }
+        } catch (error) {
+            console.error('Error forcing sync from Firebase:', error);
+            // Fall back to regular data loading
+            await this.restoreData(true);
             return false;
         }
     }
