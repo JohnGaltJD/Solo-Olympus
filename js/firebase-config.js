@@ -61,7 +61,9 @@ function initializeFirebase() {
  * Check if Firebase is connected
  */
 function checkFirebaseConnection() {
-    if (typeof firebase === 'undefined' || !firebase.firestore) {
+    console.log("Checking Firebase connection status...");
+    
+    if (typeof firebase === 'undefined') {
         console.warn("Firebase not available for connection check");
         updateConnectionStatus(false);
         return Promise.resolve(false);
@@ -69,29 +71,83 @@ function checkFirebaseConnection() {
     
     return new Promise((resolve) => {
         try {
-            const db = firebase.firestore();
-            const connectedRef = firebase.database().ref(".info/connected");
+            // First, try using the Realtime Database .info/connected reference
+            if (firebase.database) {
+                console.log("Using Realtime Database for connection check");
+                
+                const connectedRef = firebase.database().ref(".info/connected");
+                connectedRef.on("value", (snap) => {
+                    const connected = snap.val() === true;
+                    console.log("Realtime Database connection status:", connected ? "ONLINE" : "OFFLINE");
+                    updateConnectionStatus(connected);
+                    resolve(connected);
+                });
+                
+                // Set a timeout for the Realtime Database check
+                setTimeout(() => {
+                    console.log("Realtime Database connection check ongoing...");
+                }, 2000);
+            } else {
+                // Fallback to Firestore ping if Realtime Database is not available
+                fallbackFirestoreCheck(resolve);
+            }
             
-            connectedRef.on("value", (snap) => {
-                const connected = snap.val() === true;
-                console.log("Firebase connection status:", connected ? "ONLINE" : "OFFLINE");
-                updateConnectionStatus(connected);
-                resolve(connected);
-            });
-            
-            // Set a timeout in case Firebase doesn't respond
+            // Set an overall timeout
             setTimeout(() => {
-                console.warn("Firebase connection check timed out");
-                updateConnectionStatus(false);
-                resolve(false);
+                console.warn("Firebase connection check timed out, falling back to Firestore ping");
+                fallbackFirestoreCheck(resolve);
             }, 5000);
             
         } catch (error) {
-            console.error("Error checking Firebase connection:", error);
-            updateConnectionStatus(false);
-            resolve(false);
+            console.error("Error in primary connection check:", error);
+            fallbackFirestoreCheck(resolve);
         }
     });
+}
+
+/**
+ * Fallback method to check connection using Firestore
+ */
+function fallbackFirestoreCheck(resolveCallback) {
+    try {
+        if (!firebase.firestore) {
+            console.warn("Firestore not available for fallback connection check");
+            updateConnectionStatus(false);
+            if (resolveCallback) resolveCallback(false);
+            return;
+        }
+        
+        console.log("Using Firestore ping for connection check");
+        const db = firebase.firestore();
+        const timestamp = Date.now().toString();
+        
+        // Try to write to a test document
+        db.collection('_connection_test').doc(timestamp)
+            .set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() })
+            .then(() => {
+                console.log("Firestore connection test successful");
+                updateConnectionStatus(true);
+                if (resolveCallback) resolveCallback(true);
+                
+                // Clean up the test document
+                setTimeout(() => {
+                    db.collection('_connection_test').doc(timestamp).delete()
+                        .catch(err => console.log("Cleanup error:", err));
+                }, 5000);
+            })
+            .catch((error) => {
+                console.error("Firestore connection test failed:", error);
+                // Try navigator.onLine as last resort
+                const isOnline = navigator.onLine;
+                console.log("Navigator.onLine status:", isOnline ? "ONLINE" : "OFFLINE");
+                updateConnectionStatus(isOnline);
+                if (resolveCallback) resolveCallback(isOnline);
+            });
+    } catch (error) {
+        console.error("Error in fallback connection check:", error);
+        updateConnectionStatus(false);
+        if (resolveCallback) resolveCallback(false);
+    }
 }
 
 /**

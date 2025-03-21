@@ -1651,72 +1651,176 @@ const DataManager = {
      */
     manualSync: function() {
         console.log("Manual sync initiated");
+        UIManager.showToast("Syncing with cloud...", "info");
+        
         return new Promise((resolve, reject) => {
-            // Check if Firebase is available
-            if (!window.firebase || !window.firebase.firestore) {
-                console.error("Firebase not available for manual sync");
-                reject(new Error("Firebase not available"));
-                return;
-            }
-
-            // Check if we have a family ID
-            const familyId = this.getFamilyId();
-            if (!familyId) {
-                console.error("No family ID available for manual sync");
-                reject(new Error("No family ID available"));
-                return;
-            }
-
-            console.log(`Manual sync: Fetching data for family ${familyId}`);
-            const db = firebase.firestore();
-            
-            // Get the document from Firebase
-            db.collection("families").doc(familyId).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const firebaseData = doc.data();
-                        console.log("Manual sync: Data retrieved from Firebase", firebaseData);
-                        
-                        // Validate data structure
-                        if (!firebaseData || typeof firebaseData !== 'object') {
-                            console.error("Manual sync: Invalid data structure in Firebase");
-                            reject(new Error("Invalid data structure in Firebase"));
+            // First, check connection status
+            if (window.checkFirebaseConnection) {
+                window.checkFirebaseConnection()
+                    .then(isConnected => {
+                        if (!isConnected) {
+                            console.error("Manual sync: No connection to Firebase");
+                            UIManager.showToast("Cannot sync: You're offline", "error");
+                            reject(new Error("Not connected to Firebase"));
                             return;
                         }
                         
-                        // Import the data from Firebase
-                        try {
-                            // Clear current data first
-                            this.accounts = {};
-                            this.transactions = [];
-                            this.goals = [];
-                            this.chores = [];
-                            
-                            // Restore the data from Firebase
-                            this.restoreData(firebaseData);
-                            
-                            // Force save to localStorage with the updated data
-                            this.saveToLocalStorage();
-                            
-                            // Update the UI
-                            this.updateAllUI();
-                            
-                            console.log("Manual sync: Successfully synchronized with Firebase");
-                            resolve(true);
-                        } catch (error) {
-                            console.error("Manual sync: Error processing data", error);
-                            reject(error);
+                        // If connected, proceed with sync
+                        this._performManualSync(resolve, reject);
+                    })
+                    .catch(error => {
+                        console.error("Manual sync: Error checking connection", error);
+                        UIManager.showToast("Connection check failed", "error");
+                        reject(error);
+                    });
+            } else {
+                // If checkFirebaseConnection is not available, proceed with sync anyway
+                this._performManualSync(resolve, reject);
+            }
+        });
+    },
+    
+    /**
+     * Internal method to perform the actual manual sync with Firebase
+     * @private
+     */
+    _performManualSync: function(resolve, reject) {
+        // Check if Firebase is available
+        if (!window.firebase || !window.firebase.firestore) {
+            console.error("Manual sync: Firebase not available");
+            UIManager.showToast("Firebase not available", "error");
+            reject(new Error("Firebase not available"));
+            return;
+        }
+
+        // Check if we have a family ID
+        const familyId = this.getFamilyId();
+        if (!familyId) {
+            console.error("Manual sync: No family ID available");
+            UIManager.showToast("No family code set", "error");
+            reject(new Error("No family ID available"));
+            return;
+        }
+
+        console.log(`Manual sync: Fetching data for family ${familyId}`);
+        const db = firebase.firestore();
+        
+        // Lock data saving while we sync
+        this._isSaving = true;
+        
+        // Get the document from Firebase
+        db.collection("families").doc(familyId).get()
+            .then(doc => {
+                if (doc.exists) {
+                    const firebaseData = doc.data();
+                    console.log("Manual sync: Data retrieved from Firebase", firebaseData);
+                    
+                    // Validate data structure
+                    if (!firebaseData || typeof firebaseData !== 'object') {
+                        throw new Error("Invalid data structure in Firebase");
+                    }
+                    
+                    // Create a backup of current data
+                    const currentData = this.exportData();
+                    console.log("Manual sync: Current local data", currentData);
+                    
+                    // Capture timestamp of data for comparison
+                    const firebaseTimestamp = firebaseData.lastUpdated || 0;
+                    const localTimestamp = currentData.lastUpdated || 0;
+                    
+                    // Import the data from Firebase
+                    try {
+                        // Clear current data first
+                        this.accounts = {};
+                        this.transactions = [];
+                        this.goals = [];
+                        this.chores = [];
+                        
+                        // Restore the data from Firebase
+                        const validData = this.validateDataStructure(firebaseData);
+                        if (!validData) {
+                            throw new Error("Firebase data failed validation");
                         }
+                        
+                        // Apply data migrations if needed
+                        const migratedData = this.migrateData(firebaseData);
+                        this.restoreData(migratedData);
+                        
+                        // Add debug information about balance
+                        console.log("Manual sync: Firebase balance:", this.accounts.main ? this.accounts.main.balance : 'unknown');
+                        console.log("Manual sync: Previous local balance:", currentData.accounts.main ? currentData.accounts.main.balance : 'unknown');
+                        
+                        // Force save to localStorage with the updated data
+                        this.saveToLocalStorage();
+                        
+                        // Force save to Firebase to ensure consistency
+                        this.saveData(true).then(() => {
+                            console.log("Manual sync: Successfully synchronized and saved to Firebase");
+                        }).catch(err => {
+                            console.warn("Manual sync: Error saving synchronized data back to Firebase", err);
+                        });
+                        
+                        // Update the UI after sync
+                        this.updateAllUI();
+                        
+                        console.log("Manual sync: Successfully synchronized with Firebase");
+                        UIManager.showToast("Sync completed successfully!", "success");
+                        
+                        // Remove the saving lock
+                        this._isSaving = false;
+                        resolve(true);
+                    } catch (error) {
+                        // Restore from backup on error
+                        console.error("Manual sync: Error processing data", error);
+                        
+                        // Try to recover previous state
+                        try {
+                            this.importData(JSON.stringify(currentData));
+                            console.log("Manual sync: Restored previous local state after error");
+                        } catch (recoveryError) {
+                            console.error("Manual sync: Failed to restore previous state", recoveryError);
+                            this.resetData();
+                            console.warn("Manual sync: Reset to default state due to recovery failure");
+                        }
+                        
+                        // Remove the saving lock
+                        this._isSaving = false;
+                        UIManager.showToast("Sync error: " + error.message, "error");
+                        reject(error);
+                    }
+                } else {
+                    console.error("Manual sync: No data found in Firebase for this family ID");
+                    
+                    // Check if we should initialize the data
+                    if (confirm("No data found in the cloud for this family code. Would you like to initialize it with your current data?")) {
+                        // Save current data to Firebase
+                        this.saveData(true)
+                            .then(() => {
+                                console.log("Manual sync: Initialized Firebase with local data");
+                                UIManager.showToast("Initialized cloud with your data", "success");
+                                resolve(true);
+                            })
+                            .catch(err => {
+                                console.error("Manual sync: Failed to initialize Firebase", err);
+                                UIManager.showToast("Failed to initialize cloud data", "error");
+                                reject(err);
+                            })
+                            .finally(() => {
+                                this._isSaving = false;
+                            });
                     } else {
-                        console.error("Manual sync: No data found in Firebase for this family ID");
+                        this._isSaving = false;
+                        UIManager.showToast("No data found in cloud", "warning");
                         reject(new Error("No data found in Firebase"));
                     }
-                })
-                .catch(error => {
-                    console.error("Manual sync: Error fetching data from Firebase", error);
-                    reject(error);
-                });
-        });
+                }
+            })
+            .catch(error => {
+                console.error("Manual sync: Error fetching data from Firebase", error);
+                this._isSaving = false;
+                UIManager.showToast("Error fetching cloud data", "error");
+                reject(error);
+            });
     },
     
     /**
