@@ -1762,12 +1762,15 @@ const DataManager = {
         
         return new Promise((resolve, reject) => {
             try {
+                console.log("In manualSync: Performing sync operation");
+                
                 // First, try to sync with Firebase if connected
                 if (window.isFirebaseConnected && window.firebase && window.db) {
                     console.log("Firebase connected, attempting cloud sync");
                     
                     // Call forceSyncFromFirebase if available
                     if (typeof this.forceSyncFromFirebase === 'function') {
+                        console.log("Calling forceSyncFromFirebase method");
                         this.forceSyncFromFirebase()
                             .then(result => {
                                 if (result) {
@@ -1792,6 +1795,10 @@ const DataManager = {
                 }
             } catch (error) {
                 console.error("Error in manual sync:", error);
+                // Show error toast if UI manager is available
+                if (window.UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast("Sync error: " + error.message, "error");
+                }
                 reject(error);
             }
         });
@@ -1803,14 +1810,37 @@ const DataManager = {
      */
     _performLocalSync: function(resolve, reject) {
         try {
+            console.log("Performing local sync between browser tabs");
+            
             // Get current data from localStorage
-            const currentData = JSON.parse(localStorage.getItem('olympusBank')) || this.data;
+            const localStorageData = localStorage.getItem('olympusBank');
+            console.log("Local storage data exists:", !!localStorageData);
             
-            // Update our local data
-            this.data = currentData;
-            
-            // Save the data to localStorage to ensure it's up-to-date
-            localStorage.setItem('olympusBank', JSON.stringify(this.data));
+            if (localStorageData) {
+                try {
+                    // Parse the data
+                    const currentData = JSON.parse(localStorageData);
+                    
+                    // Validate the data
+                    if (this.validateDataStructure(currentData)) {
+                        console.log("Local data is valid, updating current data");
+                        
+                        // Update our local data
+                        this.data = this.migrateData(currentData);
+                        
+                        // Save the data to localStorage to ensure it's up-to-date
+                        localStorage.setItem('olympusBank', JSON.stringify(this.data));
+                        
+                        console.log("Data saved back to localStorage");
+                    } else {
+                        console.warn("Invalid data structure in localStorage");
+                    }
+                } catch (parseError) {
+                    console.error("Error parsing localStorage data:", parseError);
+                }
+            } else {
+                console.log("No data in localStorage, using current memory data");
+            }
             
             // Show toast if UI manager is available
             if (window.UIManager && typeof UIManager.showToast === 'function') {
@@ -1822,7 +1852,10 @@ const DataManager = {
             
             // Signal other tabs to sync
             if (window.triggerCrossBrowserSync) {
+                console.log("Triggering cross-browser sync");
                 window.triggerCrossBrowserSync();
+            } else {
+                console.warn("triggerCrossBrowserSync function not available");
             }
             
             console.log("Local sync completed successfully");
@@ -1924,4 +1957,7 @@ const DataManager = {
 // Initialize DataManager when the document is loaded
 document.addEventListener('DOMContentLoaded', () => {
     DataManager.init();
-}); 
+});
+
+// At the end of the file, add this line
+window.DataManager = DataManager; 

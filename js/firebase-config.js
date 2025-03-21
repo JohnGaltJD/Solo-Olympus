@@ -360,52 +360,69 @@ function handleSyncButtonClick(event) {
     button.innerHTML = '<i class="fas fa-sync fa-spin"></i> Syncing...';
     button.disabled = true;
     
-    console.log("Sync button clicked, triggering manual sync");
+    console.log("Sync button clicked, checking DataManager availability...");
     
-    // Call DataManager.manualSync or forceSyncFromFirebase if available
-    if (window.DataManager) {
-        const syncMethod = (window.isFirebaseConnected && typeof DataManager.forceSyncFromFirebase === 'function') 
-            ? DataManager.forceSyncFromFirebase 
-            : DataManager.manualSync;
-        
-        // Display different message based on connection status
-        if (window.UIManager && typeof UIManager.showToast === 'function') {
-            if (window.isFirebaseConnected) {
-                UIManager.showToast("Syncing with cloud...", "info");
-            } else {
-                UIManager.showToast("Local sync only (offline mode)", "warning");
-            }
-        }
-        
-        syncMethod.call(DataManager)
-            .then(() => {
-                console.log("Sync completed successfully via button");
-                // Reset button after sync
-                setTimeout(() => {
+    // Add a small delay to ensure DataManager is fully initialized
+    setTimeout(() => {
+        try {
+            // Detailed log to diagnose the issue
+            console.log("DataManager exists:", !!window.DataManager);
+            console.log("manualSync exists:", window.DataManager && typeof window.DataManager.manualSync === 'function');
+            
+            // Call DataManager.manualSync or forceSyncFromFirebase if available
+            if (window.DataManager) {
+                if (typeof window.DataManager.manualSync === 'function') {
+                    console.log("Calling DataManager.manualSync...");
+                    
+                    // Display different message based on connection status
+                    if (window.UIManager && typeof UIManager.showToast === 'function') {
+                        if (window.isFirebaseConnected) {
+                            UIManager.showToast("Syncing with cloud...", "info");
+                        } else {
+                            UIManager.showToast("Local sync only (offline mode)", "warning");
+                        }
+                    }
+                    
+                    window.DataManager.manualSync()
+                        .then(() => {
+                            console.log("Sync completed successfully via button");
+                            // Reset button after sync
+                            setTimeout(() => {
+                                button.innerHTML = originalHTML;
+                                button.disabled = false;
+                            }, 500);
+                        })
+                        .catch(error => {
+                            console.error("Error in sync via button:", error);
+                            // Reset button and show error
+                            button.innerHTML = originalHTML;
+                            button.disabled = false;
+                            
+                            if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                UIManager.showToast("Sync failed: " + error.message, "error");
+                            } else {
+                                alert("Sync failed: " + error.message);
+                            }
+                        });
+                } else {
+                    console.error("DataManager.manualSync is not a function");
                     button.innerHTML = originalHTML;
                     button.disabled = false;
-                }, 500);
-            })
-            .catch(error => {
-                console.error("Error in sync via button:", error);
-                // Reset button and show error
+                    alert("Sync function is defined incorrectly. Please reload the page and try again.");
+                }
+            } else {
+                console.error("DataManager is not available");
                 button.innerHTML = originalHTML;
                 button.disabled = false;
-                
-                if (window.UIManager && typeof UIManager.showToast === 'function') {
-                    UIManager.showToast("Sync failed: " + error.message, "error");
-                } else {
-                    alert("Sync failed: " + error.message);
-                }
-            });
-    } else {
-        console.error("DataManager not available");
-        // Reset button
-        button.innerHTML = originalHTML;
-        button.disabled = false;
-        
-        alert("Sync function not available");
-    }
+                alert("Sync function not available. Please reload the page and try again.");
+            }
+        } catch (error) {
+            console.error("Error during sync attempt:", error);
+            button.innerHTML = originalHTML;
+            button.disabled = false;
+            alert("Error during sync: " + error.message);
+        }
+    }, 500); // Short delay to ensure everything is loaded
 }
 
 // Expose functions globally
