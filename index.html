@@ -16,17 +16,26 @@
     <meta name="apple-mobile-web-app-title" content="Olympus Bank">
     <link rel="apple-touch-icon" href="images/app-icons/icon-152x152.png">
     
-    <!-- Browser Compatibility Check - Load Early -->
-    <script src="js/browser-check.js"></script>
-    
-    <!-- Performance Monitoring - Load Early -->
-    <script src="js/perf-monitor.js"></script>
-    
     <!-- Preload Critical Assets -->
     <link rel="preload" href="css/reset.css" as="style">
     <link rel="preload" href="css/style.css" as="style">
     <link rel="preload" href="js/data.js" as="script">
     <link rel="preload" href="js/auth.js" as="script">
+    
+    <!-- Firebase SDKs - Load early to ensure availability -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Configuration - Load before app scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-auth.js"></script>
+    
+    <!-- Browser Compatibility Check - Load Early -->
+    <script src="js/browser-check.js"></script>
+    
+    <!-- Performance Monitoring - Load Early -->
+    <script src="js/perf-monitor.js"></script>
     
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/reset.css">
@@ -471,15 +480,6 @@
     
     <!-- Service Worker Registration -->
     <script src="js/service-worker-registration.js"></script>
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    
-    <!-- Firebase Configuration -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/firebase-auth.js"></script>
     
     <!-- Load application scripts in correct order -->
     <script>

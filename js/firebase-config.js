@@ -1,11 +1,7 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// firebase-config.js
+// Firebase configuration and initialization for Family Mount Olympus Bank
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase configuration object
 const firebaseConfig = {
   apiKey: "AIzaSyASylSKRaBpnpZUn8ji4mDaNLiq0ioxfao",
   authDomain: "mount-olympus-2415.firebaseapp.com",
@@ -15,10 +11,6 @@ const firebaseConfig = {
   appId: "1:602539148372:web:9d48c00bd2a41aaa75d9c1",
   measurementId: "G-4F6X3Y10J9"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
 // Reference to Firestore database (global)
 let db = null;
@@ -101,29 +93,48 @@ function checkFirebaseConnection() {
 // Initialize Firebase if available
 document.addEventListener('DOMContentLoaded', function() {
     try {
-        // Check if Firebase is already available
+        console.log('Attempting to initialize Firebase...');
+        
+        // Check if Firebase is available
         if (typeof firebase !== 'undefined') {
-            // Initialize Firebase with config
-            firebase.initializeApp(firebaseConfig);
+            console.log('Firebase SDK found, initializing with config...');
             
-            // Initialize Firestore
-            db = firebase.firestore();
-            
-            console.log('Firebase initialized successfully');
-            
-            // Add connection status indicator to the UI
-            addConnectionStatusIndicator();
-            
-            // Check connection status
-            checkFirebaseConnection();
-            
-            // Set up periodic connection check every 30 seconds
-            setInterval(checkFirebaseConnection, 30000);
+            try {
+                // Initialize Firebase with config
+                firebase.initializeApp(firebaseConfig);
+                
+                // Initialize Firestore
+                db = firebase.firestore();
+                
+                console.log('Firebase initialized successfully');
+                console.log('Firestore database reference created');
+                
+                // Add connection status indicator to the UI
+                addConnectionStatusIndicator();
+                
+                // Check connection status
+                checkFirebaseConnection();
+                
+                // Check if firebase auth is available
+                if (firebase.auth) {
+                    console.log('Firebase Auth is available');
+                } else {
+                    console.warn('Firebase Auth is not available');
+                }
+                
+                // Set up periodic connection check every 30 seconds
+                setInterval(checkFirebaseConnection, 30000);
+            } catch (initError) {
+                console.error('Error during Firebase initialization:', initError);
+            }
         } else {
-            console.warn('Firebase is not available - running in local storage mode');
+            console.warn('Firebase SDK is not available - running in local storage mode');
+            // Debug why Firebase is not available
+            console.log('window.firebase =', typeof window.firebase);
+            console.log('All loaded scripts:', Array.from(document.getElementsByTagName('script')).map(s => s.src));
         }
     } catch (error) {
-        console.error('Error initializing Firebase:', error);
+        console.error('Critical error initializing Firebase:', error);
     }
 });
 

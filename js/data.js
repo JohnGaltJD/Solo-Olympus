@@ -88,57 +88,86 @@ const DataManager = {
      */
     setupFirebaseListener() {
         try {
-            console.log('Setting up Firebase real-time listener for family:', this.familyId);
+            console.log('[FIREBASE LISTENER] Setting up real-time listener for family:', this.familyId);
             
             // Clean up any existing listener
             if (this.firebaseListener) {
+                console.log('[FIREBASE LISTENER] Removing existing listener');
                 this.firebaseListener();
                 this.firebaseListener = null;
             }
             
+            if (!window.firebase || !window.db) {
+                console.warn('[FIREBASE LISTENER] Firebase or db not available, cannot set up listener');
+                return false;
+            }
+            
             // Setup real-time listener
             const docRef = db.collection('families').doc(this.familyId);
-            this.firebaseListener = docRef.onSnapshot(snapshot => {
-                if (snapshot.exists) {
-                    console.log('Received real-time update from Firebase');
-                    const firestoreData = snapshot.data();
+            console.log('[FIREBASE LISTENER] Creating listener for document:', `families/${this.familyId}`);
+            
+            this.firebaseListener = docRef.onSnapshot(
+                snapshot => {
+                    console.log('[FIREBASE LISTENER] Received snapshot event', snapshot.exists ? 'document exists' : 'document does not exist');
                     
-                    // Only update if we're not in the middle of saving
-                    if (!this._isSaving) {
-                        console.log('Updating local data from Firebase real-time update');
+                    if (snapshot.exists) {
+                        console.log('[FIREBASE LISTENER] Received real-time update from Firebase');
+                        const firestoreData = snapshot.data();
+                        console.log('[FIREBASE LISTENER] Raw data:', JSON.stringify(firestoreData).substring(0, 100) + '...');
                         
-                        // Validate and migrate data
-                        if (this.validateDataStructure(firestoreData)) {
-                            const migratedData = this.migrateData(firestoreData);
+                        // Only update if we're not in the middle of saving
+                        if (!this._isSaving) {
+                            console.log('[FIREBASE LISTENER] Updating local data from Firebase real-time update');
                             
-                            // Update local data
-                            this.data = migratedData;
-                            
-                            // Store as last known good data
-                            this.lastGoodData = JSON.parse(JSON.stringify(this.data));
-                            
-                            // Update UI if UIManager is available
-                            if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
-                                console.log('Refreshing UI after Firebase update');
-                                UIManager.refreshAllData();
+                            // Validate and migrate data
+                            if (this.validateDataStructure(firestoreData)) {
+                                const migratedData = this.migrateData(firestoreData);
+                                
+                                // Check if data is different from current data
+                                const currentDataStr = JSON.stringify(this.data);
+                                const newDataStr = JSON.stringify(migratedData);
+                                
+                                if (currentDataStr !== newDataStr) {
+                                    console.log('[FIREBASE LISTENER] Data has changed, updating UI');
+                                    
+                                    // Update local data
+                                    this.data = migratedData;
+                                    
+                                    // Store as last known good data
+                                    this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                                    
+                                    // Update UI if UIManager is available
+                                    if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                                        console.log('[FIREBASE LISTENER] Refreshing UI after Firebase update');
+                                        UIManager.refreshAllData();
+                                        
+                                        // Show toast notification about data sync
+                                        if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                            UIManager.showToast('Data synchronized from another device!', 'success');
+                                        }
+                                    }
+                                } else {
+                                    console.log('[FIREBASE LISTENER] Data unchanged, no UI update needed');
+                                }
+                            } else {
+                                console.warn('[FIREBASE LISTENER] Invalid data structure received from Firebase');
                             }
                         } else {
-                            console.warn('Invalid data structure received from Firebase');
+                            console.log('[FIREBASE LISTENER] Ignoring Firebase update as we are currently saving');
                         }
                     } else {
-                        console.log('Ignoring Firebase update as we are currently saving');
+                        console.log('[FIREBASE LISTENER] No data exists in Firebase for this family ID');
                     }
-                } else {
-                    console.log('No data exists in Firebase for this family ID');
+                }, 
+                error => {
+                    console.error('[FIREBASE LISTENER] Error in Firebase real-time listener:', error);
                 }
-            }, error => {
-                console.error('Error in Firebase real-time listener:', error);
-            });
+            );
             
-            console.log('Firebase listener setup complete');
+            console.log('[FIREBASE LISTENER] Listener setup complete');
             return true;
         } catch (error) {
-            console.error('Error setting up Firebase listener:', error);
+            console.error('[FIREBASE LISTENER] Error setting up Firebase listener:', error);
             return false;
         }
     },
@@ -1335,12 +1364,13 @@ const DataManager = {
         try {
             if (!familyId) return false;
             
-            console.log(`Changing family ID from ${this.familyId} to ${familyId}`);
+            console.log(`[DATA SYNC] Changing family ID from ${this.familyId} to ${familyId}`);
             
             // Clean up existing Firebase listener
             if (this.firebaseListener) {
                 this.firebaseListener();
                 this.firebaseListener = null;
+                console.log('[DATA SYNC] Cleaned up previous Firebase listener');
             }
             
             // Store old family ID in case we need to revert
@@ -1349,59 +1379,70 @@ const DataManager = {
             // Update family ID
             this.familyId = familyId;
             localStorage.setItem('olympusBankFamilyId', this.familyId);
+            console.log('[DATA SYNC] Updated family ID in localStorage');
             
             // Check if Firebase is available
             const useFirebase = window.firebase && window.db;
+            console.log('[DATA SYNC] Firebase available:', useFirebase);
             
             // First check if data exists for this family ID in Firebase
             let existingDataFound = false;
             
             if (useFirebase) {
                 try {
-                    console.log(`Checking if data exists for family ID: ${familyId}`);
+                    console.log(`[DATA SYNC] Checking if data exists for family ID: ${familyId}`);
                     const docRef = db.collection('families').doc(familyId);
                     const doc = await docRef.get();
                     
                     if (doc.exists) {
-                        console.log('Found existing data for this family code!');
+                        console.log('[DATA SYNC] Found existing data for this family code!');
+                        console.log('[DATA SYNC] Data:', doc.data());
                         const firestoreData = doc.data();
                         
                         // Validate the data structure
                         if (this.validateDataStructure(firestoreData)) {
-                            console.log('Existing data is valid - will load it');
+                            console.log('[DATA SYNC] Existing data is valid - will load it');
                             existingDataFound = true;
+                            
+                            // Immediately update our data with the Firebase data
+                            this.data = this.migrateData(firestoreData);
+                            this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                            
+                            // Force UI refresh if UIManager is available
+                            if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                                console.log('[DATA SYNC] Refreshing UI with Firebase data');
+                                UIManager.refreshAllData();
+                            }
                         } else {
-                            console.warn('Found data for this family code, but it has invalid structure');
+                            console.warn('[DATA SYNC] Found data for this family code, but it has invalid structure');
                         }
                     } else {
-                        console.log('No existing data found for this family code. Will create new data.');
+                        console.log('[DATA SYNC] No existing data found for this family code. Will create new data.');
                     }
                 } catch (error) {
-                    console.error('Error checking for existing data:', error);
+                    console.error('[DATA SYNC] Error checking for existing data:', error);
                 }
             }
             
             if (existingDataFound) {
-                // If data exists, restore it
+                // Even though we've already loaded the data, call restoreData to ensure everything is properly initialized
+                console.log('[DATA SYNC] Already loaded Firebase data, but calling restoreData for full initialization');
                 await this.restoreData(useFirebase);
-                console.log('Restored existing data for family code');
+                console.log('[DATA SYNC] Restored existing data for family code');
                 
                 // Show success message if UIManager is available
                 if (window.UIManager && typeof UIManager.showToast === 'function') {
                     UIManager.showToast('Connected to existing family account!', 'success');
                 }
             } else {
-                // If no data exists for this family ID, we have two options:
-                // 1. Create new data (if this is genuinely a new family)
-                // 2. There's an error/typo in the family code
-                
-                // For now, we'll assume it's a new family code and create new data
-                console.log('Creating new data for this family code');
+                // If no data exists for this family ID, we'll create new data
+                console.log('[DATA SYNC] Creating new data for this family code');
                 
                 // Initialize with default data
                 this.data = JSON.parse(JSON.stringify(this.defaultData));
                 
                 // Save the default data to this family ID
+                console.log('[DATA SYNC] Saving default data to Firebase');
                 await this.saveData(true); // Force save to Firebase if available
                 
                 // Show notification if UIManager is available
@@ -1412,12 +1453,13 @@ const DataManager = {
             
             // Set up new Firebase listener
             if (useFirebase) {
+                console.log('[DATA SYNC] Setting up Firebase listener for real-time updates');
                 this.setupFirebaseListener();
             }
             
             return true;
         } catch (error) {
-            console.error('Error setting family ID:', error);
+            console.error('[DATA SYNC] Error setting family ID:', error);
             return false;
         }
     }
