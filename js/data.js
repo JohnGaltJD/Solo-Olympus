@@ -1327,7 +1327,7 @@ const DataManager = {
     },
     
     /**
-     * Set the family ID and reload data if needed
+     * Set family ID and reload data
      * @param {string} familyId - New family ID
      * @returns {Promise<boolean>} Success status
      */
@@ -1343,13 +1343,72 @@ const DataManager = {
                 this.firebaseListener = null;
             }
             
+            // Store old family ID in case we need to revert
+            const oldFamilyId = this.familyId;
+            
             // Update family ID
             this.familyId = familyId;
             localStorage.setItem('olympusBankFamilyId', this.familyId);
             
-            // Restore data from Firebase with new family ID
+            // Check if Firebase is available
             const useFirebase = window.firebase && window.db;
-            await this.restoreData(useFirebase);
+            
+            // First check if data exists for this family ID in Firebase
+            let existingDataFound = false;
+            
+            if (useFirebase) {
+                try {
+                    console.log(`Checking if data exists for family ID: ${familyId}`);
+                    const docRef = db.collection('families').doc(familyId);
+                    const doc = await docRef.get();
+                    
+                    if (doc.exists) {
+                        console.log('Found existing data for this family code!');
+                        const firestoreData = doc.data();
+                        
+                        // Validate the data structure
+                        if (this.validateDataStructure(firestoreData)) {
+                            console.log('Existing data is valid - will load it');
+                            existingDataFound = true;
+                        } else {
+                            console.warn('Found data for this family code, but it has invalid structure');
+                        }
+                    } else {
+                        console.log('No existing data found for this family code. Will create new data.');
+                    }
+                } catch (error) {
+                    console.error('Error checking for existing data:', error);
+                }
+            }
+            
+            if (existingDataFound) {
+                // If data exists, restore it
+                await this.restoreData(useFirebase);
+                console.log('Restored existing data for family code');
+                
+                // Show success message if UIManager is available
+                if (window.UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast('Connected to existing family account!', 'success');
+                }
+            } else {
+                // If no data exists for this family ID, we have two options:
+                // 1. Create new data (if this is genuinely a new family)
+                // 2. There's an error/typo in the family code
+                
+                // For now, we'll assume it's a new family code and create new data
+                console.log('Creating new data for this family code');
+                
+                // Initialize with default data
+                this.data = JSON.parse(JSON.stringify(this.defaultData));
+                
+                // Save the default data to this family ID
+                await this.saveData(true); // Force save to Firebase if available
+                
+                // Show notification if UIManager is available
+                if (window.UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast('New family account created!', 'success');
+                }
+            }
             
             // Set up new Firebase listener
             if (useFirebase) {

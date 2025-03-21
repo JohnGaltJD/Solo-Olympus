@@ -369,13 +369,32 @@ const AuthManager = {
             statusElement.textContent = 'Setting family code...';
             statusElement.className = 'family-code-status';
             
+            // First check if this family code exists in Firebase
+            let isExistingFamily = false;
+            
+            if (window.firebase && window.db) {
+                try {
+                    const docRef = db.collection('families').doc(familyCode.trim().toLowerCase());
+                    const doc = await docRef.get();
+                    isExistingFamily = doc.exists;
+                    console.log(`Family code ${familyCode} exists in Firebase: ${isExistingFamily}`);
+                } catch (error) {
+                    console.warn('Error checking if family exists:', error);
+                    // Continue anyway, DataManager will handle this
+                }
+            }
+            
             // Check if Firebase Auth Manager is available
             if (window.FirebaseAuthManager && typeof FirebaseAuthManager.signInWithFamilyCode === 'function') {
                 // Use Firebase Auth Manager to set family code
                 const result = await FirebaseAuthManager.signInWithFamilyCode(familyCode);
                 
                 if (result) {
-                    statusElement.textContent = 'Family code set successfully! Your data will now sync across devices.';
+                    if (isExistingFamily) {
+                        statusElement.textContent = 'Connected to existing family account! Your data will now sync across devices.';
+                    } else {
+                        statusElement.textContent = 'New family account created! Your data will now sync across devices.';
+                    }
                     statusElement.className = 'family-code-status success';
                     
                     // Force refresh data
@@ -405,7 +424,11 @@ const AuthManager = {
                     }
                 }
                 
-                statusElement.textContent = 'Family code set successfully! Your data will now sync across devices.';
+                if (isExistingFamily) {
+                    statusElement.textContent = 'Connected to existing family account! Your data will now sync across devices.';
+                } else {
+                    statusElement.textContent = 'New family account created! Your data will now sync across devices.';
+                }
                 statusElement.className = 'family-code-status success';
             }
         } catch (error) {
