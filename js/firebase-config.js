@@ -18,6 +18,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Small delay to ensure Firebase SDK is loaded
     setTimeout(function() {
         initializeFirebase();
+        
+        // Set an interval to periodically check connection
+        setInterval(function() {
+            console.log("Running scheduled Firebase connection check");
+            checkFirebaseConnection();
+        }, 30000); // Check every 30 seconds
+        
+        // Also run a connection check immediately after init
+        setTimeout(function() {
+            console.log("Running initial connection check after initialization");
+            checkFirebaseConnection();
+        }, 2000);
     }, 500);
 });
 
@@ -69,6 +81,14 @@ function checkFirebaseConnection() {
         return Promise.resolve(false);
     }
     
+    // Log what Firebase modules are available
+    console.log("Firebase modules available:", {
+        app: !!firebase.app,
+        firestore: !!firebase.firestore,
+        auth: !!firebase.auth,
+        database: !!firebase.database
+    });
+    
     return new Promise((resolve) => {
         try {
             // First, try using the Realtime Database .info/connected reference
@@ -88,7 +108,7 @@ function checkFirebaseConnection() {
                     console.log("Realtime Database connection check ongoing...");
                 }, 2000);
             } else {
-                // Fallback to Firestore ping if Realtime Database is not available
+                console.warn("Firebase Realtime Database not available, falling back to Firestore");
                 fallbackFirestoreCheck(resolve);
             }
             

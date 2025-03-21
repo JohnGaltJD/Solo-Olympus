@@ -37,18 +37,30 @@ document.getElementById('reset-all-btn').addEventListener('click', function() {
     // ... existing code ...
 });
 
-// Handle sync button clicks
+// Run initial setup tasks on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded, running initial setup tasks");
+    
     // Initialize buttons
     initSyncButtons();
     
+    // Check connection status immediately
+    if (window.checkFirebaseConnection) {
+        console.log("Running immediate connection check on page load");
+        window.checkFirebaseConnection().then(status => {
+            console.log("Initial connection status:", status ? "ONLINE" : "OFFLINE");
+        });
+    } else {
+        console.warn("No connection check function available");
+    }
+    
     // Set up Firebase connection status check interval
     if (window.checkFirebaseConnection) {
-        // Initial check
-        window.checkFirebaseConnection();
-        
         // Check every 30 seconds
-        setInterval(window.checkFirebaseConnection, 30000);
+        setInterval(function() {
+            console.log("Running periodic connection check");
+            window.checkFirebaseConnection();
+        }, 30000);
     }
 });
 

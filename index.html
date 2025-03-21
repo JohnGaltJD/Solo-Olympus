@@ -24,9 +24,28 @@
     
     <!-- Firebase SDKs - Load early to ensure availability -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Add console debugging script to help diagnose Firebase issues -->
+    <script>
+        // Debug helper
+        console.log('Firebase SDK Scripts loaded:');
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                console.log('Firebase available:', typeof firebase !== 'undefined');
+                if (typeof firebase !== 'undefined') {
+                    console.log('Firebase modules check:', {
+                        app: typeof firebase.app !== 'undefined',
+                        firestore: typeof firebase.firestore !== 'undefined', 
+                        auth: typeof firebase.auth !== 'undefined',
+                        database: typeof firebase.database !== 'undefined'
+                    });
+                }
+            }, 1000);
+        });
+    </script>
     
     <!-- Firebase Configuration - Load before app scripts -->
     <script src="js/firebase-config.js"></script>

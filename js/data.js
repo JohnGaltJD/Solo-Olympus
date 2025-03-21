@@ -1681,6 +1681,95 @@ const DataManager = {
     },
     
     /**
+     * Check Firebase connection and update status
+     * @returns {Promise<boolean>} Connection status
+     */
+    async checkFirebaseConnection() {
+        // Use the global connection check method if available
+        if (window.checkFirebaseConnection) {
+            return window.checkFirebaseConnection();
+        }
+        
+        // Fallback to our own implementation
+        try {
+            // First check if Firebase is available
+            if (!window.firebase || !firebase.firestore) {
+                console.warn('[CONNECTION] Firebase not available');
+                this.updateConnectionStatus(false);
+                return false;
+            }
+            
+            // Try to access Firestore
+            try {
+                // Perform a simple database operation to check connectivity
+                const testRef = firebase.firestore().collection('_connection_test').doc('test');
+                await testRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                
+                console.log('[CONNECTION] Successfully connected to Firebase');
+                this.updateConnectionStatus(true);
+                return true;
+            } catch (firebaseError) {
+                console.error('[CONNECTION] Firebase connection test failed:', firebaseError);
+                this.updateConnectionStatus(false);
+                return false;
+            }
+        } catch (error) {
+            console.error('[CONNECTION] Error checking Firebase connection:', error);
+            this.updateConnectionStatus(false);
+            return false;
+        }
+    },
+    
+    /**
+     * Update connection status indicator
+     * @param {boolean} isOnline - Whether the app is connected to Firebase
+     */
+    updateConnectionStatus(isOnline) {
+        // Use the global connection status update method if available
+        if (window.updateConnectionStatus) {
+            window.updateConnectionStatus(isOnline);
+            return true;
+        }
+        
+        // Fallback to our own implementation
+        try {
+            // Update the connection status in localStorage for persistence
+            localStorage.setItem('olympusBankConnectionStatus', isOnline ? 'online' : 'offline');
+            
+            // Update the connection status indicators in the UI
+            const statusIndicators = document.querySelectorAll('.connection-status');
+            
+            statusIndicators.forEach(indicator => {
+                if (isOnline) {
+                    indicator.innerHTML = '<i class="fa fa-wifi"></i> Online';
+                    indicator.classList.remove('offline');
+                    indicator.classList.add('online');
+                } else {
+                    indicator.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Offline';
+                    indicator.classList.remove('online');
+                    indicator.classList.add('offline');
+                }
+            });
+            
+            // Enable or disable sync buttons based on connection status
+            const syncButtons = document.querySelectorAll('.sync-now-btn');
+            syncButtons.forEach(button => {
+                button.disabled = !isOnline;
+                if (!isOnline) {
+                    button.setAttribute('title', 'Cannot sync while offline');
+                } else {
+                    button.setAttribute('title', 'Sync data with cloud');
+                }
+            });
+            
+            return true;
+        } catch (error) {
+            console.error('[CONNECTION] Error updating connection status:', error);
+            return false;
+        }
+    },
+    
+    /**
      * Internal method to perform the actual manual sync with Firebase
      * @private
      */
@@ -1694,22 +1783,21 @@ const DataManager = {
         }
 
         // Check if we have a family ID
-        const familyId = this.getFamilyId();
-        if (!familyId) {
+        if (!this.familyId) {
             console.error("Manual sync: No family ID available");
             UIManager.showToast("No family code set", "error");
             reject(new Error("No family ID available"));
             return;
         }
 
-        console.log(`Manual sync: Fetching data for family ${familyId}`);
+        console.log(`Manual sync: Fetching data for family ${this.familyId}`);
         const db = firebase.firestore();
         
         // Lock data saving while we sync
         this._isSaving = true;
         
         // Get the document from Firebase
-        db.collection("families").doc(familyId).get()
+        db.collection("families").doc(this.familyId).get()
             .then(doc => {
                 if (doc.exists) {
                     const firebaseData = doc.data();
@@ -1721,20 +1809,21 @@ const DataManager = {
                     }
                     
                     // Create a backup of current data
-                    const currentData = this.exportData();
-                    console.log("Manual sync: Current local data", currentData);
-                    
-                    // Capture timestamp of data for comparison
-                    const firebaseTimestamp = firebaseData.lastUpdated || 0;
-                    const localTimestamp = currentData.lastUpdated || 0;
+                    const currentData = this.data;
+                    const currentDataCopy = JSON.parse(JSON.stringify(currentData));
+                    console.log("Manual sync: Current local data", currentDataCopy);
                     
                     // Import the data from Firebase
                     try {
                         // Clear current data first
-                        this.accounts = {};
-                        this.transactions = [];
-                        this.goals = [];
-                        this.chores = [];
+                        this.data = {
+                            balance: 0,
+                            transactions: [],
+                            chores: [],
+                            pendingTransactions: [],
+                            goals: [],
+                            settings: { parentPassword: 'olympus' }
+                        };
                         
                         // Restore the data from Firebase
                         const validData = this.validateDataStructure(firebaseData);
@@ -1744,14 +1833,16 @@ const DataManager = {
                         
                         // Apply data migrations if needed
                         const migratedData = this.migrateData(firebaseData);
-                        this.restoreData(migratedData);
+                        
+                        // Set our data to the Firebase data
+                        this.data = migratedData;
                         
                         // Add debug information about balance
-                        console.log("Manual sync: Firebase balance:", this.accounts.main ? this.accounts.main.balance : 'unknown');
-                        console.log("Manual sync: Previous local balance:", currentData.accounts.main ? currentData.accounts.main.balance : 'unknown');
+                        console.log("Manual sync: Firebase balance:", this.data.balance);
+                        console.log("Manual sync: Previous local balance:", currentDataCopy.balance);
                         
                         // Force save to localStorage with the updated data
-                        this.saveToLocalStorage();
+                        localStorage.setItem('olympusBank', JSON.stringify(this.data));
                         
                         // Force save to Firebase to ensure consistency
                         this.saveData(true).then(() => {
@@ -1760,8 +1851,10 @@ const DataManager = {
                             console.warn("Manual sync: Error saving synchronized data back to Firebase", err);
                         });
                         
-                        // Update the UI after sync
-                        this.updateAllUI();
+                        // Update the UI
+                        if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                            UIManager.refreshAllData();
+                        }
                         
                         console.log("Manual sync: Successfully synchronized with Firebase");
                         UIManager.showToast("Sync completed successfully!", "success");
@@ -1775,7 +1868,7 @@ const DataManager = {
                         
                         // Try to recover previous state
                         try {
-                            this.importData(JSON.stringify(currentData));
+                            this.data = currentDataCopy;
                             console.log("Manual sync: Restored previous local state after error");
                         } catch (recoveryError) {
                             console.error("Manual sync: Failed to restore previous state", recoveryError);
@@ -1822,77 +1915,6 @@ const DataManager = {
                 reject(error);
             });
     },
-    
-    /**
-     * Check Firebase connection and update status
-     * @returns {Promise<boolean>} Connection status
-     */
-    async checkFirebaseConnection() {
-        try {
-            // First check if Firebase is available
-            if (!window.firebase || !window.db) {
-                console.warn('[CONNECTION] Firebase not available');
-                this.updateConnectionStatus(false);
-                return false;
-            }
-            
-            // Try to access Firestore
-            try {
-                // Perform a simple database operation to check connectivity
-                const testRef = db.collection('_connection_test').doc('test');
-                await testRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                
-                console.log('[CONNECTION] Successfully connected to Firebase');
-                this.updateConnectionStatus(true);
-                return true;
-            } catch (firebaseError) {
-                console.error('[CONNECTION] Firebase connection test failed:', firebaseError);
-                this.updateConnectionStatus(false);
-                return false;
-            }
-        } catch (error) {
-            console.error('[CONNECTION] Error checking Firebase connection:', error);
-            this.updateConnectionStatus(false);
-            return false;
-        }
-    },
-    
-    /**
-     * Update connection status indicator
-     * @param {boolean} isOnline - Whether the app is connected to Firebase
-     */
-    updateConnectionStatus(isOnline) {
-        try {
-            // Update the connection status in localStorage for persistence
-            localStorage.setItem('olympusBankConnectionStatus', isOnline ? 'online' : 'offline');
-            
-            // Update the connection status indicators in the UI
-            const statusIndicators = document.querySelectorAll('.connection-status');
-            
-            statusIndicators.forEach(indicator => {
-                if (isOnline) {
-                    indicator.innerHTML = '🟢 Using cloud storage (online)';
-                    indicator.classList.remove('offline');
-                    indicator.classList.add('online');
-                } else {
-                    indicator.innerHTML = '🔴 Using local storage (offline)';
-                    indicator.classList.remove('online');
-                    indicator.classList.add('offline');
-                }
-            });
-            
-            // Show/hide the "Sync Now" button based on connection status
-            const syncButtons = document.querySelectorAll('.sync-now-btn');
-            syncButtons.forEach(button => {
-                button.style.display = isOnline ? 'block' : 'none';
-            });
-            
-            return true;
-        } catch (error) {
-            console.error('[CONNECTION] Error updating connection status:', error);
-            return false;
-        }
-    }
 };
 
 // Initialize DataManager when the document is loaded
