@@ -1,0 +1,33 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="98" fill="#32CD32" stroke="#FFD700" stroke-width="4"/>
+  
+  <!-- Hermes's head -->
+  <circle cx="100" cy="80" r="40" fill="#F5F5DC"/>
+  
+  <!-- Hermes's winged helmet -->
+  <ellipse cx="100" cy="50" rx="30" ry="10" fill="#A9A9A9"/>
+  <path d="M70 50 Q 60 35 80 25" fill="#F0F0F0" stroke="#A9A9A9" stroke-width="1"/>
+  <path d="M130 50 Q 140 35 120 25" fill="#F0F0F0" stroke="#A9A9A9" stroke-width="1"/>
+  
+  <!-- Hermes's eyes -->
+  <circle cx="85" cy="75" r="5" fill="#000"/>
+  <circle cx="115" cy="75" r="5" fill="#000"/>
+  
+  <!-- Hermes's mouth -->
+  <path d="M90 95 Q 100 100 110 95" stroke="#000" stroke-width="2" fill="none"/>
+  
+  <!-- Caduceus (Hermes's staff) -->
+  <line x1="100" y1="120" x2="100" y2="180" stroke="#A9A9A9" stroke-width="4"/>
+  <path d="M100 130 C 80 130, 80 150, 100 150" stroke="#FFD700" stroke-width="2" fill="none"/>
+  <path d="M100 130 C 120 130, 120 150, 100 150" stroke="#FFD700" stroke-width="2" fill="none"/>
+  <circle cx="85" cy="140" r="3" fill="#FFD700"/>
+  <circle cx="115" cy="140" r="3" fill="#FFD700"/>
+  
+  <!-- Wings on staff -->
+  <path d="M100 130 L 80 120 L 90 130" fill="#F0F0F0" stroke="#A9A9A9" stroke-width="1"/>
+  <path d="M100 130 L 120 120 L 110 130" fill="#F0F0F0" stroke="#A9A9A9" stroke-width="1"/>
+  
+  <!-- Text at bottom -->
+  <text x="100" y="190" font-family="Cinzel, serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#FFD700">HERMES</text>
+</svg> 

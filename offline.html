@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Family Mount Olympus Bank</title>
+    <link rel="icon" href="images/app-icons/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --primary-color: #3949ab;
+            --secondary-color: #ffd835;
+            --text-color: #333;
+            --background-color: #f5f5f5;
+            --error-color: #e53935;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .offline-container {
+            max-width: 600px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px 30px;
+            margin: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .offline-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--primary-color);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        
+        .olympus-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+        
+        p {
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .actions {
+            margin-top: 30px;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background-color: #303f9f;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #ffca28;
+        }
+        
+        .info-box {
+            background-color: rgba(57, 73, 171, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin: 25px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .info-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+        
+        .lightning {
+            animation: lightning 10s infinite;
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            pointer-events: none;
+        }
+        
+        @keyframes lightning {
+            0%, 100% {
+                opacity: 0;
+            }
+            5%, 8% {
+                opacity: 0.4;
+            }
+            6% {
+                opacity: 0.8;
+            }
+            60%, 65% {
+                opacity: 0.2;
+            }
+            62% {
+                opacity: 0.6;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .offline-container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 1.7rem;
+            }
+            
+            .olympus-icon {
+                font-size: 3rem;
+            }
+            
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="lightning"></div>
+        <div class="olympus-icon">⛰️</div>
+        <h1>Mount Olympus Is Unreachable</h1>
+        <p>It appears you're currently offline and cannot connect to Family Mount Olympus Bank.</p>
+        
+        <div class="info-box">
+            <div class="info-title">⚡ Zeus says:</div>
+            <p>"The clouds have temporarily blocked our connection. Your transactions and financial data remain safe on Mount Olympus and will be available when you reconnect."</p>
+        </div>
+        
+        <p>You can try using features you've previously accessed, or reconnect to continue your banking journey.</p>
+        
+        <div class="actions">
+            <button class="btn" id="retry-btn">Reconnect to Olympus</button>
+            <button class="btn btn-secondary" id="home-btn">Return to Login</button>
+        </div>
+    </div>
+
+    <script>
+        // Listen for online status changes
+        window.addEventListener('online', () => {
+            document.getElementById('retry-btn').textContent = 'Connection Restored!';
+            setTimeout(() => {
+                window.location.href = './index.html';
+            }, 1000);
+        });
+        
+        // Set up button actions
+        document.getElementById('retry-btn').addEventListener('click', () => {
+            // Try to reload the page
+            window.location.reload();
+        });
+        
+        document.getElementById('home-btn').addEventListener('click', () => {
+            // Navigate to the home page
+            window.location.href = './index.html';
+        });
+    </script>
+</body>
+</html> 

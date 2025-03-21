@@ -1,0 +1,315 @@
+/* animations.css ---
+   Contains animations and visual effects for the Family Mount Olympus Bank application */
+
+/* General Animation Keyframes */
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes slideUp {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+    0% { transform: translateY(-20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Zeus Lightning Animation */
+@keyframes lightning {
+    0% { opacity: 0; transform: scale(0.5); }
+    5% { opacity: 0.9; transform: scale(1.2); }
+    20% { opacity: 0.8; transform: scale(1.1); }
+    30% { opacity: 0.5; transform: scale(1); }
+    40% { opacity: 0.9; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(2); }
+}
+
+/* Poseidon Water Ripple Animation */
+@keyframes ripple {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(4); opacity: 0; }
+}
+
+/* Confetti Fall Animation */
+@keyframes confettiFall {
+    0% { transform: translateY(-100vh) rotate(0); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* Toast Animation */
+@keyframes toastSlideIn {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastSlideOut {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* Application Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.5s ease forwards;
+}
+
+.slide-up {
+    animation: slideUp 0.5s ease forwards;
+}
+
+.slide-down {
+    animation: slideDown 0.5s ease forwards;
+}
+
+.pulse {
+    animation: pulse 1s ease infinite;
+}
+
+/* Zeus Lightning Effect */
+.lightning-effect {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(117,183,255,1) 50%, rgba(0,82,212,1) 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.8),
+                0 0 40px 20px rgba(117, 183, 255, 0.6),
+                0 0 60px 30px rgba(0, 82, 212, 0.4);
+    z-index: 100;
+    pointer-events: none;
+    animation: lightning 1s ease-out forwards;
+}
+
+/* Poseidon Water Ripple Effect */
+.water-ripple {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0, 156, 209, 0.8);
+    border-radius: 50%;
+    z-index: 100;
+    pointer-events: none;
+    animation: ripple 1.5s ease-out forwards;
+}
+
+/* Confetti Element */
+.confetti {
+    position: fixed;
+    top: -10px;
+    z-index: 1000;
+    pointer-events: none;
+    animation: confettiFall 3s ease-in forwards;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 320px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #fff;
+    color: #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    position: relative;
+}
+
+.toast::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+.toast-icon {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.toast-success {
+    border-left: 4px solid #4CAF50;
+}
+
+.toast-success .toast-icon {
+    color: #4CAF50;
+}
+
+.toast-error {
+    border-left: 4px solid #F44336;
+}
+
+.toast-error .toast-icon {
+    color: #F44336;
+}
+
+.toast-warning {
+    border-left: 4px solid #FF9800;
+}
+
+.toast-warning .toast-icon {
+    color: #FF9800;
+}
+
+.toast-info {
+    border-left: 4px solid #2196F3;
+}
+
+.toast-info .toast-icon {
+    color: #2196F3;
+}
+
+/* Card and Element Transitions */
+.card, .chore-item, .transaction-item, .goal-item, button, .btn {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+}
+
+/* Modal Animation Styles */
+.modal {
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.modal-content {
+    transition: transform 0.4s ease;
+}
+
+/* Fade In Element animation */
+.fade-in-element {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-in-element.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Balance Update Animation */
+.balance-update {
+    animation: pulse 1s ease;
+}
+
+/* Goal Progress Animation */
+@keyframes progressFill {
+    0% { width: 0; }
+    100% { width: var(--progress-width); }
+}
+
+.goal-progress-bar .progress {
+    animation: progressFill 1s ease forwards;
+}
+
+/* Celebration Overlay */
+.celebration-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.celebration-content {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    transform: scale(0.8);
+    animation: pulse 0.5s ease forwards 0.3s;
+}
+
+.celebration-title {
+    color: #8A2BE2;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.celebration-amount {
+    color: #FFD700;
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.celebration-emoji {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.celebration-close {
+    margin-top: 1.5rem;
+    padding: 0.8rem 1.5rem;
+    background-color: #8A2BE2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.celebration-close:hover {
+    background-color: #7209b7;
+}
+
+/* Tab Switch Animation */
+.tab-content {
+    transition: opacity 0.3s ease;
+}
+
+/* Header Background Parallax */
+.header-bg {
+    transition: transform 0.3s ease-out;
+}
+
+/* Button hover and focus states with animation */
+button:hover, .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active, .btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+} 

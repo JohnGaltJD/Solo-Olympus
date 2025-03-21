@@ -1,0 +1,33 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#3949ab" rx="100" ry="100"/>
+  
+  <!-- Mount Olympus stylized -->
+  <path d="M256,50 L100,350 L412,350 Z" fill="#c5cae9" opacity="0.8"/>
+  <path d="M206,150 L256,80 L306,150 L256,150 Z" fill="#fff" opacity="0.9"/>
+  
+  <!-- Temple columns -->
+  <rect x="206" y="180" width="10" height="70" fill="#f5f5f5"/>
+  <rect x="236" y="180" width="10" height="70" fill="#f5f5f5"/>
+  <rect x="266" y="180" width="10" height="70" fill="#f5f5f5"/>
+  <rect x="296" y="180" width="10" height="70" fill="#f5f5f5"/>
+  
+  <!-- Temple base and roof -->
+  <rect x="196" y="250" width="120" height="20" fill="#e8eaf6"/>
+  <path d="M186,180 L256,150 L326,180 Z" fill="#e8eaf6"/>
+  
+  <!-- Coin/Treasury representation -->
+  <circle cx="256" cy="350" r="70" fill="#fdd835"/>
+  <circle cx="256" cy="350" r="60" fill="#ffeb3b"/>
+  <text x="256" y="370" font-family="Arial, sans-serif" font-size="70" font-weight="bold" text-anchor="middle" fill="#3949ab">$</text>
+  
+  <!-- Lightning bolt (Zeus symbol) -->
+  <path d="M380,120 L350,150 L370,160 L330,220 L360,190 L340,180 L380,120" fill="#fdd835"/>
+  
+  <!-- Wing (Hermes symbol) -->
+  <path d="M140,120 C160,100 180,130 150,160 C180,140 190,120 140,120" fill="#fdd835"/>
+  <path d="M160,140 C180,120 200,150 170,180 C200,160 210,140 160,140" fill="#fdd835"/>
+  
+  <!-- Border -->
+  <rect width="512" height="512" fill="none" stroke="#fdd835" stroke-width="12" rx="100" ry="100"/>
+</svg> 

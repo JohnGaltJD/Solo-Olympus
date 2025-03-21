@@ -1,0 +1,27 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Explicitly declare text files to be normalized
+*.html text
+*.css text
+*.js text
+*.md text
+*.svg text
+*.json text
+
+# Denote binary files that should not be modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Windows-specific files should always have CRLF line endings
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Shell scripts should always have LF line endings
+*.sh text eol=lf
+
+# Force Windows PowerShell scripts to use CRLF
+*.ps1 text eol=crlf 

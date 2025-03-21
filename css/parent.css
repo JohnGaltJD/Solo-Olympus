@@ -1,0 +1,135 @@
+/* parent.css */
+/* Specific styles for the Zeus (parent) interface */
+
+/* Zeus-specific theming */
+.dashboard-header {
+    background: linear-gradient(to right, var(--zeus-blue), var(--hades-purple));
+}
+
+.dashboard-sidebar {
+    background-color: rgba(248, 248, 248, 0.95);
+    border-right: 1px solid var(--zeus-blue-light);
+}
+
+/* Zeus Dashboard Tabs */
+#parent-dashboard .dashboard-tab h2 {
+    color: var(--zeus-blue);
+    border-bottom: 2px solid var(--olympian-gold);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Approval Controls */
+.approve-btn {
+    background-color: var(--olive-green);
+    color: white;
+    border: 2px solid var(--olive-green);
+}
+
+.approve-btn:hover {
+    background-color: transparent;
+    color: var(--olive-green);
+}
+
+.reject-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: 2px solid #e74c3c;
+}
+
+.reject-btn:hover {
+    background-color: transparent;
+    color: #e74c3c;
+}
+
+/* Zeus's Chore Management */
+.chore-management-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.chore-filter {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--zeus-blue-light);
+    color: white;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--zeus-blue);
+    margin-right: var(--spacing-xs);
+}
+
+.pending-approval {
+    border-left: 4px solid var(--zeus-blue);
+    background-color: rgba(35, 87, 137, 0.05);
+}
+
+/* Transaction Approval Styling */
+.pending-transaction {
+    padding: var(--spacing-md);
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-md);
+    border-left: 4px solid var(--zeus-blue);
+}
+
+.transaction-reason {
+    margin-top: var(--spacing-xs);
+    font-style: italic;
+    color: var(--slate-grey);
+}
+
+.approval-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+/* Settings Panel */
+.settings-group h3 {
+    color: var(--zeus-blue);
+    border-bottom: 1px solid var(--olympian-gold-light);
+    padding-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Zeus Power Animation */
+.zeus-power {
+    position: relative;
+}
+
+.zeus-power::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    bottom: -5px;
+    left: -5px;
+    border-radius: var(--border-radius);
+    background: linear-gradient(45deg, transparent, var(--olympian-gold-light), transparent);
+    z-index: -1;
+    animation: zeus-power 2s infinite;
+}
+
+@keyframes zeus-power {
+    0% { transform: rotate(0deg); opacity: 0.6; }
+    100% { transform: rotate(360deg); opacity: 0; }
+}
+
+/* Parent Goals View */
+#parent-goals-container .goal-item {
+    position: relative;
+}
+
+#parent-goals-container .goal-item::before {
+    content: 'Zeus View';
+    position: absolute;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    background-color: var(--zeus-blue-light);
+    color: white;
+    border-radius: 3px;
+} 

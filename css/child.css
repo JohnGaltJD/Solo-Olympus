@@ -1,0 +1,205 @@
+/* child.css */
+/* Specific styles for the Hermes (child) interface */
+
+/* Hermes-specific theming */
+#child-dashboard .dashboard-header {
+    background: linear-gradient(to right, var(--hermes-orange), var(--olympian-gold));
+}
+
+#child-dashboard .dashboard-sidebar {
+    background-color: rgba(248, 248, 248, 0.95);
+    border-right: 1px solid var(--hermes-orange);
+}
+
+/* Child Dashboard Tabs */
+#child-dashboard .dashboard-tab h2 {
+    color: var(--hermes-orange);
+    border-bottom: 2px solid var(--olympian-gold);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Hermes Treasury Styling */
+.olympus-greeting {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), 
+                      url('../images/backgrounds/hermes-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--olympian-gold-light);
+}
+
+.olympus-greeting h2 {
+    color: var(--hermes-orange);
+    margin-bottom: var(--spacing-md);
+}
+
+.divine-balance {
+    display: inline-block;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    margin-top: var(--spacing-md);
+    border: 1px solid var(--olympian-gold-light);
+}
+
+.divine-balance h3 {
+    color: var(--hermes-orange);
+}
+
+.divine-balance .balance-amount {
+    color: var(--hermes-orange);
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-xl);
+    gap: var(--spacing-md);
+}
+
+/* Chore Completion */
+.complete-chore-btn {
+    background-color: var(--olive-green);
+    color: white;
+    border: 2px solid var(--olive-green);
+}
+
+.complete-chore-btn:hover {
+    background-color: transparent;
+    color: var(--olive-green);
+}
+
+.completed-label {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--olive-green);
+    color: white;
+    border-radius: 3px;
+    font-size: 0.8rem;
+}
+
+.pending-label {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--hermes-orange);
+    color: white;
+    border-radius: 3px;
+    font-size: 0.8rem;
+}
+
+/* Child Goals */
+.quest-description {
+    font-style: italic;
+    color: var(--slate-grey);
+    margin-bottom: var(--spacing-sm);
+}
+
+.quest-reward {
+    display: flex;
+    align-items: center;
+    margin-top: var(--spacing-md);
+    font-weight: 600;
+    color: var(--hermes-orange);
+}
+
+.reward-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: var(--spacing-sm);
+    background-image: url('../images/icons/coin.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+/* Goal Celebration */
+.celebration-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    animation: fadeIn 0.5s ease;
+}
+
+.celebration-content {
+    background-color: white;
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius);
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    overflow: hidden;
+}
+
+.celebration-content::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    right: -50px;
+    bottom: -50px;
+    background: radial-gradient(circle, var(--olympian-gold-light) 0%, rgba(255, 255, 255, 0) 70%);
+    z-index: -1;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.05); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 0.5; }
+}
+
+.celebration-title {
+    color: var(--hermes-orange);
+    font-size: 2rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.celebration-trophy {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto var(--spacing-lg);
+    background-image: url('../images/icons/trophy.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Child Transactions */
+.transaction-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: white;
+    margin-left: var(--spacing-sm);
+}
+
+.transaction-badge.chore {
+    background-color: var(--olive-green);
+}
+
+.transaction-badge.deposit {
+    background-color: var(--zeus-blue);
+}
+
+.transaction-badge.withdrawal {
+    background-color: var(--hermes-orange);
+}
+
+.transaction-badge.goal {
+    background-color: var(--hades-purple);
+} 

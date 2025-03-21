@@ -1,0 +1,83 @@
+<svg width="1200" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sky background with gradient -->
+  <defs>
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a237e" />
+      <stop offset="50%" stop-color="#3949ab" />
+      <stop offset="100%" stop-color="#5c6bc0" />
+    </linearGradient>
+    
+    <!-- Cloud pattern -->
+    <pattern id="cloudPattern" patternUnits="userSpaceOnUse" width="350" height="200">
+      <path d="M25,100 
+               C 35,60 75,40 105,70 
+               C 130,30 200,30 220,75
+               C 260,50 300,80 300,110
+               C 320,95 350,115 330,145
+               C 340,170 310,190 275,180
+               C 265,210 225,215 195,190
+               C 160,215 125,215 100,190
+               C 80,200 50,195 40,170
+               C 10,160 5,130 25,110
+               C 10,95 15,70 25,100" 
+            fill="rgba(255, 255, 255, 0.6)" />
+    </pattern>
+    
+    <!-- Star pattern -->
+    <pattern id="starPattern" patternUnits="userSpaceOnUse" width="200" height="200">
+      <circle cx="20" cy="30" r="1" fill="white" opacity="0.8"/>
+      <circle cx="120" cy="50" r="0.8" fill="white" opacity="0.7"/>
+      <circle cx="180" cy="80" r="1.2" fill="white" opacity="0.9"/>
+      <circle cx="50" cy="100" r="0.7" fill="white" opacity="0.7"/>
+      <circle cx="140" cy="170" r="1" fill="white" opacity="0.8"/>
+      <circle cx="90" cy="190" r="0.9" fill="white" opacity="0.9"/>
+    </pattern>
+  </defs>
+  
+  <!-- Sky -->
+  <rect width="1200" height="600" fill="url(#skyGradient)" />
+  
+  <!-- Stars -->
+  <rect width="1200" height="300" fill="url(#starPattern)" opacity="0.8" />
+  
+  <!-- Clouds -->
+  <rect width="1200" height="600" fill="url(#cloudPattern)" opacity="0.5" />
+  
+  <!-- Mountain background -->
+  <path d="M0,400 L150,250 L300,350 L450,180 L600,300 L750,200 L900,250 L1050,180 L1200,350 L1200,600 L0,600 Z" 
+        fill="#8c9eff" opacity="0.7" />
+  
+  <!-- Mountain mid-layer -->
+  <path d="M0,450 L200,320 L350,400 L500,280 L650,380 L800,250 L950,350 L1100,230 L1200,380 L1200,600 L0,600 Z" 
+        fill="#5c6bc0" opacity="0.8" />
+  
+  <!-- Mountain front layer -->
+  <path d="M0,500 L100,450 L200,500 L300,420 L400,480 L500,400 L600,480 L700,440 L800,490 L900,420 L1000,500 L1100,450 L1200,500 L1200,600 L0,600 Z" 
+        fill="#3949ab" />
+  
+  <!-- Mount Olympus peak -->
+  <path d="M500,400 L600,200 L700,400 Z" fill="#e8eaf6" />
+  <path d="M550,400 L600,250 L650,400 Z" fill="white" />
+  
+  <!-- Greek temple on top -->
+  <rect x="575" y="380" width="50" height="20" fill="#f5f5f5" />
+  <rect x="580" y="370" width="40" height="10" fill="#eeeeee" />
+  
+  <!-- Temple columns -->
+  <rect x="580" y="350" width="5" height="20" fill="#f5f5f5" />
+  <rect x="590" y="350" width="5" height="20" fill="#f5f5f5" />
+  <rect x="600" y="350" width="5" height="20" fill="#f5f5f5" />
+  <rect x="610" y="350" width="5" height="20" fill="#f5f5f5" />
+  
+  <!-- Temple roof -->
+  <path d="M575,350 L600,335 L625,350 Z" fill="#eeeeee" />
+  
+  <!-- Foreground hills -->
+  <path d="M0,550 L50,530 L100,550 L150,540 L200,550 L250,535 L300,550 L350,540 L400,550 L450,535 L500,550 L550,535 L600,550 L650,535 L700,550 L750,540 L800,550 L850,540 L900,550 L950,540 L1000,550 L1050,535 L1100,550 L1150,540 L1200,550 L1200,600 L0,600 Z" 
+        fill="#283593" />
+  
+  <!-- Gold rays from the mountain top -->
+  <path d="M600,200 L580,100 L600,150 L620,80 L600,180 Z" fill="#FFD700" opacity="0.3"/>
+  <path d="M600,200 L550,110 L580,170 L520,100 L590,190 Z" fill="#FFD700" opacity="0.2"/>
+  <path d="M600,200 L650,110 L620,170 L680,100 L610,190 Z" fill="#FFD700" opacity="0.2"/>
+</svg> 

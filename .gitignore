@@ -1,0 +1,73 @@
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor directories and files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+**/node_modules/
+**/node_modules/**
+**/@next/
+**/@next/swc-win32-x64-msvc/
+**/next-swc.win32-x64-msvc.node
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Cache and temp files
+.cache/
+.tmp/
+*.swp
+*.swo
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore other directories outside the project
+**/Bank of Olympus/
+**/New - Mount Olympus Bank/ 

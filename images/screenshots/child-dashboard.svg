@@ -1,0 +1,78 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1280" height="720" fill="#f0f7ff"/>
+  
+  <!-- App frame -->
+  <rect x="40" y="40" width="1200" height="640" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  
+  <!-- Header -->
+  <rect x="40" y="40" width="1200" height="80" fill="#5c6bc0" rx="8" ry="8"/>
+  <rect x="40" y="80" width="1200" height="40" fill="#5c6bc0" rx="0" ry="0"/>
+  
+  <!-- Header text -->
+  <text x="100" y="90" font-family="Arial, sans-serif" font-size="24" fill="#ffffff" font-weight="bold">Kaden's Divine Treasury</text>
+  
+  <!-- Navigation tabs -->
+  <rect x="100" y="120" width="180" height="40" fill="#3949ab" rx="8" ry="8"/>
+  <rect x="290" y="120" width="180" height="40" fill="#7986cb" rx="8" ry="8"/>
+  <rect x="480" y="120" width="180" height="40" fill="#7986cb" rx="8" ry="8"/>
+  
+  <!-- Tab text -->
+  <text x="140" y="145" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">My Treasury</text>
+  <text x="380" y="145" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">Quests (Chores)</text>
+  <text x="570" y="145" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">Adventures (Goals)</text>
+  
+  <!-- Balance card -->
+  <rect x="100" y="180" width="320" height="150" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  <text x="120" y="210" font-family="Arial, sans-serif" font-size="16" fill="#757575">My Gold</text>
+  <text x="120" y="260" font-family="Arial, sans-serif" font-size="36" fill="#ffd835" font-weight="bold">$385.80</text>
+  <rect x="120" y="280" width="140" height="30" fill="#5c6bc0" rx="15" ry="15"/>
+  <text x="190" y="300" font-family="Arial, sans-serif" font-size="14" fill="#ffffff" text-anchor="middle">Request Coins</text>
+  
+  <!-- Recent transactions -->
+  <rect x="100" y="350" width="320" height="280" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  <text x="120" y="380" font-family="Arial, sans-serif" font-size="16" fill="#757575">Recent Adventures</text>
+  <!-- Transaction rows -->
+  <rect x="120" y="400" width="280" height="40" fill="#f0f7ff" rx="4" ry="4"/>
+  <rect x="120" y="450" width="280" height="40" fill="#f0f7ff" rx="4" ry="4"/>
+  <rect x="120" y="500" width="280" height="40" fill="#f0f7ff" rx="4" ry="4"/>
+  <rect x="120" y="550" width="280" height="40" fill="#f0f7ff" rx="4" ry="4"/>
+  
+  <!-- Quests (Chores) -->
+  <rect x="440" y="180" width="380" height="450" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  <text x="460" y="210" font-family="Arial, sans-serif" font-size="16" fill="#757575">Available Quests</text>
+  <!-- Chore rows -->
+  <rect x="460" y="230" width="340" height="70" fill="#f0f7ff" rx="4" ry="4"/>
+  <rect x="460" y="310" width="340" height="70" fill="#f0f7ff" rx="4" ry="4"/>
+  <rect x="460" y="390" width="340" height="70" fill="#f0f7ff" rx="4" ry="4"/>
+  <rect x="460" y="470" width="340" height="70" fill="#f0f7ff" rx="4" ry="4"/>
+  
+  <!-- Goals -->
+  <rect x="840" y="180" width="320" height="450" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  <text x="860" y="210" font-family="Arial, sans-serif" font-size="16" fill="#757575">My Adventures</text>
+  
+  <!-- Goal card 1 -->
+  <rect x="860" y="230" width="280" height="130" fill="#f0f7ff" rx="8" ry="8"/>
+  <circle cx="890" cy="280" r="30" fill="#ffd835"/>
+  <text x="890" y="285" font-family="Arial, sans-serif" font-size="16" fill="#5c6bc0" text-anchor="middle">🎮</text>
+  <text x="940" y="260" font-family="Arial, sans-serif" font-size="14" fill="#212121" font-weight="bold">New Video Game</text>
+  <rect x="940" y="270" width="160" height="10" fill="#e0e0e0" rx="5" ry="5"/>
+  <rect x="940" y="270" width="80" height="10" fill="#5c6bc0" rx="5" ry="5"/>
+  <text x="940" y="300" font-family="Arial, sans-serif" font-size="12" fill="#757575">$30.00 / $60.00</text>
+  
+  <!-- Goal card 2 -->
+  <rect x="860" y="370" width="280" height="130" fill="#f0f7ff" rx="8" ry="8"/>
+  <circle cx="890" cy="420" r="30" fill="#ffd835"/>
+  <text x="890" y="425" font-family="Arial, sans-serif" font-size="16" fill="#5c6bc0" text-anchor="middle">🚲</text>
+  <text x="940" y="400" font-family="Arial, sans-serif" font-size="14" fill="#212121" font-weight="bold">New Bike</text>
+  <rect x="940" y="410" width="160" height="10" fill="#e0e0e0" rx="5" ry="5"/>
+  <rect x="940" y="410" width="40" height="10" fill="#5c6bc0" rx="5" ry="5"/>
+  <text x="940" y="440" font-family="Arial, sans-serif" font-size="12" fill="#757575">$50.00 / $250.00</text>
+
+  <!-- Hermes icon -->
+  <path d="M1120,75 L1140,55 L1160,75 L1140,95 Z" fill="#ffd835"/>
+  <text x="1140" y="80" font-family="Arial, sans-serif" font-size="16" fill="#3949ab" text-anchor="middle" font-weight="bold">H</text>
+
+  <!-- Placeholder text -->
+  <text x="640" y="650" font-family="Arial, sans-serif" font-size="20" fill="#9e9e9e" text-anchor="middle" font-style="italic">Child Dashboard Screenshot</text>
+</svg> 

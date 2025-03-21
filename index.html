@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Family Mount Olympus Bank - A Greek mythology themed banking app for teaching children financial responsibility">
+    <meta name="theme-color" content="#3949ab">
+    <title>Family Mount Olympus Bank</title>
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Olympus Bank">
+    <link rel="apple-touch-icon" href="images/app-icons/icon-152x152.png">
+    
+    <!-- Browser Compatibility Check - Load Early -->
+    <script src="js/browser-check.js"></script>
+    
+    <!-- Performance Monitoring - Load Early -->
+    <script src="js/perf-monitor.js"></script>
+    
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="css/reset.css" as="style">
+    <link rel="preload" href="css/style.css" as="style">
+    <link rel="preload" href="js/data.js" as="script">
+    <link rel="preload" href="js/auth.js" as="script">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Open+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="images/app-icons/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <!-- Application Loading Indicator -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-container">
+            <div class="olympus-loader"></div>
+            <p>Opening the Gates of Olympus...</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Login Section -->
+        <section id="login-section" class="active-section">
+            <div class="olympus-bank-header">
+                <h1>Mount Olympus Bank</h1>
+                <div class="olympus-pillars">
+                    <div class="pillar left-pillar"></div>
+                    <div class="divine-light"></div>
+                    <div class="pillar right-pillar"></div>
+                </div>
+            </div>
+            
+            <div class="login-container">
+                <h2>Choose Your Path</h2>
+                
+                <div class="family-code-container">
+                    <p>Enter your family code to access your account across devices:</p>
+                    <div class="family-code-input">
+                        <input type="text" id="family-code" placeholder="Family Code">
+                        <button id="set-family-code-btn">Set Family Code</button>
+                    </div>
+                    <p class="family-code-status" id="family-code-status"></p>
+                </div>
+                
+                <div class="login-options">
+                    <div class="login-option" id="parent-option">
+                        <div class="god-avatar zeus-avatar"></div>
+                        <h3>Zeus</h3>
+                        <p>Parent Access</p>
+                        <button class="login-btn" id="parent-login-btn">Enter as Zeus</button>
+                    </div>
+                    
+                    <div class="login-option" id="child-option">
+                        <div class="god-avatar hermes-avatar"></div>
+                        <h3>Hermes</h3>
+                        <p>Kaden's Access</p>
+                        <button class="login-btn" id="child-login-btn">Enter as Hermes</button>
+                    </div>
+                </div>
+                
+                <!-- Parent Password Modal (Hidden by default) -->
+                <div class="modal" id="parent-password-modal">
+                    <div class="modal-content">
+                        <h3>Zeus Authentication</h3>
+                        <p>Enter the divine password to access the parent controls:</p>
+                        <input type="password" id="parent-password" placeholder="Password">
+                        <div class="modal-buttons">
+                            <button id="cancel-password-btn">Cancel</button>
+                            <button id="submit-password-btn">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Parent Dashboard Section (Hidden by default) -->
+        <section id="parent-dashboard" class="dashboard-section">
+            <header class="dashboard-header">
+                <h1>Zeus Dashboard: Overseeing Mount Olympus</h1>
+                <div class="header-controls">
+                    <div id="parent-firebase-status" class="firebase-status">Checking connection...</div>
+                    <button id="parent-logout-btn" class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <div class="dashboard-sidebar">
+                    <nav class="dashboard-nav">
+                        <ul>
+                            <li><button data-tab="account-overview" class="tab-btn active">Account Overview</button></li>
+                            <li><button data-tab="chore-management" class="tab-btn">Chore Management</button></li>
+                            <li><button data-tab="approval-hub" class="tab-btn">Approval Hub</button></li>
+                            <li><button data-tab="savings-goals" class="tab-btn">Savings Goals</button></li>
+                            <li><button data-tab="settings" class="tab-btn">Settings</button></li>
+                        </ul>
+                    </nav>
+                </div>
+                
+                <div class="dashboard-main">
+                    <!-- Account Overview Tab -->
+                    <div class="dashboard-tab active" id="account-overview-tab">
+                        <h2>Kaden's Treasury</h2>
+                        <div class="account-balance">
+                            <h3>Current Balance</h3>
+                            <div class="balance-amount">$<span id="parent-balance-display">385.80</span></div>
+                        </div>
+                        
+                        <div class="recent-transactions">
+                            <h3>Recent Transactions</h3>
+                            <div class="transaction-list" id="parent-transaction-list">
+                                <!-- Transactions will be populated with JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chore Management Tab -->
+                    <div class="dashboard-tab" id="chore-management-tab">
+                        <h2>Labors of Hermes</h2>
+                        <div class="chore-controls">
+                            <button id="add-chore-btn">Add New Labor</button>
+                        </div>
+                        
+                        <div class="chore-list-container">
+                            <h3>Assigned Labors</h3>
+                            <div id="parent-chore-list" class="chore-list">
+                                <!-- Chores will be populated with JavaScript -->
+                            </div>
+                            
+                            <h3>Completed Labors Awaiting Approval</h3>
+                            <div id="pending-chore-list" class="chore-list">
+                                <!-- Pending chores will be populated with JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Add Chore Modal (Hidden by default) -->
+                        <div class="modal" id="add-chore-modal">
+                            <div class="modal-content">
+                                <h3>Assign New Labor</h3>
+                                <form id="add-chore-form">
+                                    <div class="form-group">
+                                        <label for="chore-name">Labor Name:</label>
+                                        <input type="text" id="chore-name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="chore-value">Reward Value ($):</label>
+                                        <input type="number" id="chore-value" step="0.01" min="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="chore-frequency">Frequency:</label>
+                                        <select id="chore-frequency">
+                                            <option value="occurrence">Per Occurrence</option>
+                                            <option value="day">Daily</option>
+                                            <option value="week">Weekly</option>
+                                        </select>
+                                    </div>
+                                    <div class="modal-buttons">
+                                        <button type="button" id="cancel-add-chore-btn">Cancel</button>
+                                        <button type="submit">Add Labor</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Approval Hub Tab -->
+                    <div class="dashboard-tab" id="approval-hub-tab">
+                        <h2>Divine Approvals</h2>
+                        <div class="approval-container">
+                            <h3>All Requests Awaiting Zeus's Approval</h3>
+                            <div id="unified-approvals-list" class="approval-list">
+                                <!-- Unified approvals will be populated with JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Keep the old sections for backward compatibility but hide them with CSS -->
+                        <div class="approval-legacy-container" style="display: none;">
+                            <div class="pending-transactions">
+                                <h3>Transaction Requests</h3>
+                                <div id="pending-transaction-list" class="transaction-list">
+                                    <!-- Pending transactions will be populated with JavaScript -->
+                                </div>
+                            </div>
+                            <div class="pending-chores">
+                                <h3>Labor Completions</h3>
+                                <div id="pending-chore-list" class="chore-list">
+                                    <!-- Pending chores will be populated with JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Savings Goals Tab -->
+                    <div class="dashboard-tab" id="savings-goals-tab">
+                        <h2>Quests of Olympus</h2>
+                        <div class="goals-container" id="parent-goals-container">
+                            <!-- Goals will be populated with JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Tab -->
+                    <div class="dashboard-tab" id="settings-tab">
+                        <h2>Divine Settings</h2>
+                        <div class="settings-container">
+                            <div class="settings-group">
+                                <h3>Zeus Authentication</h3>
+                                <form id="change-password-form">
+                                    <div class="form-group">
+                                        <label for="current-password">Current Password:</label>
+                                        <input type="password" id="current-password" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new-password">New Password:</label>
+                                        <input type="password" id="new-password" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="confirm-password">Confirm New Password:</label>
+                                        <input type="password" id="confirm-password" required>
+                                    </div>
+                                    <button type="submit">Update Password</button>
+                                </form>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3>Account Management</h3>
+                                <form id="reset-account-form">
+                                    <div class="form-group">
+                                        <label for="reset-balance">Update Account Balance:</label>
+                                        <input type="number" id="reset-balance" step="0.01" min="0">
+                                    </div>
+                                    <div class="danger-zone">
+                                        <h4>Danger Zone</h4>
+                                        <button type="button" id="clear-transactions-btn" class="danger-btn">Clear All Transactions</button>
+                                        <button type="button" id="reset-all-btn" class="danger-btn">Reset Entire Application</button>
+                                    </div>
+                                    <button type="submit">Update Balance</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Child Dashboard Section (Hidden by default) -->
+        <section id="child-dashboard" class="dashboard-section">
+            <header class="dashboard-header">
+                <h1>Hermes Dashboard: Treasury of Olympus</h1>
+                <div class="header-controls">
+                    <div id="child-firebase-status" class="firebase-status">Checking connection...</div>
+                    <button id="child-logout-btn" class="logout-btn">Logout</button>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <div class="dashboard-sidebar">
+                    <nav class="dashboard-nav">
+                        <ul>
+                            <li><button data-tab="child-account" class="tab-btn active">My Treasury</button></li>
+                            <li><button data-tab="child-chores" class="tab-btn">My Labors</button></li>
+                            <li><button data-tab="child-transactions" class="tab-btn">Transactions</button></li>
+                            <li><button data-tab="child-goals" class="tab-btn">My Quests</button></li>
+                        </ul>
+                    </nav>
+                </div>
+                
+                <div class="dashboard-main">
+                    <!-- Child Account Tab -->
+                    <div class="dashboard-tab active" id="child-account-tab">
+                        <div class="olympus-greeting">
+                            <h2>Welcome, Kaden of Olympus!</h2>
+                            <div class="divine-balance">
+                                <h3>Your Divine Treasury</h3>
+                                <div class="balance-amount">$<span id="child-balance-display">385.80</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-actions">
+                            <button id="request-deposit-btn" class="action-btn deposit-btn">Request Deposit</button>
+                            <button id="request-withdrawal-btn" class="action-btn withdraw-btn">Request Withdrawal</button>
+                        </div>
+                        
+                        <div class="recent-activities">
+                            <h3>Recent Divine Activities</h3>
+                            <div class="transaction-list" id="child-recent-transactions">
+                                <!-- Recent transactions will be populated with JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Transaction Request Modal (Hidden by default) -->
+                        <div class="modal" id="transaction-request-modal">
+                            <div class="modal-content">
+                                <h3 id="transaction-modal-title">Request from Zeus</h3>
+                                <form id="transaction-request-form">
+                                    <div class="form-group">
+                                        <label for="transaction-amount">Amount ($):</label>
+                                        <input type="number" id="transaction-amount" step="0.01" min="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="transaction-reason">Reason:</label>
+                                        <textarea id="transaction-reason" required></textarea>
+                                    </div>
+                                    <input type="hidden" id="transaction-type" value="deposit">
+                                    <div class="modal-buttons">
+                                        <button type="button" id="cancel-transaction-btn">Cancel</button>
+                                        <button type="submit">Submit Request</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Child Chores Tab -->
+                    <div class="dashboard-tab" id="child-chores-tab">
+                        <h2>Labors of Hermes</h2>
+                        <div class="chore-container">
+                            <div class="assigned-chores">
+                                <h3>Assigned Labors</h3>
+                                <div class="chore-list" id="child-chore-list">
+                                    <!-- Assigned chores will be populated with JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="pending-chores">
+                                <h3>Awaiting Zeus's Approval</h3>
+                                <div class="chore-list" id="child-pending-chores">
+                                    <!-- Pending chores will be populated with JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="completed-chores">
+                                <h3>Completed Labors</h3>
+                                <div class="chore-list" id="child-completed-chores">
+                                    <!-- Completed chores will be populated with JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Child Transactions Tab -->
+                    <div class="dashboard-tab" id="child-transactions-tab">
+                        <h2>Treasury Transactions</h2>
+                        <div class="transaction-history">
+                            <div class="transaction-filters">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="deposits">Deposits</button>
+                                <button class="filter-btn" data-filter="withdrawals">Withdrawals</button>
+                                <button class="filter-btn" data-filter="chores">Labor Rewards</button>
+                            </div>
+                            <div class="transaction-list" id="child-transaction-history">
+                                <!-- Transaction history will be populated with JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Child Goals Tab -->
+                    <div class="dashboard-tab" id="child-goals-tab">
+                        <h2>Heroic Quests</h2>
+                        <div class="goals-header">
+                            <h3>Your Divine Quests</h3>
+                            <button id="add-goal-btn">Begin New Quest</button>
+                        </div>
+                        
+                        <div class="goals-container" id="child-goals-container">
+                            <!-- Goals will be populated with JavaScript -->
+                        </div>
+                        
+                        <!-- Add Goal Modal (Hidden by default) -->
+                        <div class="modal" id="add-goal-modal">
+                            <div class="modal-content">
+                                <h3>Begin a New Quest</h3>
+                                <form id="add-goal-form">
+                                    <div class="form-group">
+                                        <label for="goal-name">Quest Name:</label>
+                                        <input type="text" id="goal-name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="goal-amount">Target Amount ($):</label>
+                                        <input type="number" id="goal-amount" step="0.01" min="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="goal-icon">Choose an Icon:</label>
+                                        <div class="goal-icons-container" id="goal-icons-selection">
+                                            <!-- Goal icons will be populated with JavaScript -->
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="selected-goal-icon" value="default">
+                                    <div class="modal-buttons">
+                                        <button type="button" id="cancel-add-goal-btn">Cancel</button>
+                                        <button type="submit">Begin Quest</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- App Install Prompt (Hidden by default) -->
+    <div id="install-prompt" class="install-prompt hidden">
+        <div class="install-prompt-content">
+            <h3>Install Mount Olympus Bank</h3>
+            <p>Add this app to your home screen for quick access to Kaden's divine treasury!</p>
+            <div class="install-buttons">
+                <button id="install-later" class="secondary-btn">Later</button>
+                <button id="install-now" class="primary-btn">Install Now</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification System -->
+    <div id="toast-container" class="toast-container"></div>
+    
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/transactions.js"></script>
+    <script src="js/chores.js"></script>
+    <script src="js/goals.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/browser-check.js"></script>
+    <script src="js/perf-monitor.js"></script>
+    <script src="js/a11y-enhancements.js"></script>
+    
+    <!-- Development mode scripts -->
+    <script>
+        // Load testing utilities only in development environment
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const testScript = document.createElement('script');
+            testScript.src = 'js/test-error-handling.js';
+            document.body.appendChild(testScript);
+            console.log('Development mode: Test utilities loaded');
+        }
+    </script>
+    
+    <!-- Service Worker Registration -->
+    <script src="js/service-worker-registration.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-auth.js"></script>
+    
+    <!-- Load application scripts in correct order -->
+    <script>
+        // Loading screen handling
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                setTimeout(() => {
+                    loadingScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
+                }, 800);
+            }
+        });
+    
+        // Service worker registration for performance enhancement
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/js/service-worker.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+        
+        // Install prompt handling
+        let deferredPrompt;
+        const installPrompt = document.getElementById('install-prompt');
+        const installNow = document.getElementById('install-now');
+        const installLater = document.getElementById('install-later');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            // Show the install prompt
+            installPrompt.classList.remove('hidden');
+        });
+        
+        installNow.addEventListener('click', () => {
+            // Hide the app install prompt
+            installPrompt.classList.add('hidden');
+            // Show the browser install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+            });
+        });
+        
+        installLater.addEventListener('click', () => {
+            // Hide the app install prompt
+            installPrompt.classList.add('hidden');
+        });
+        
+        // URL parameter handling for direct login
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roleParam = urlParams.get('role');
+            
+            if (roleParam === 'parent') {
+                setTimeout(() => {
+                    document.getElementById('parent-login-btn').click();
+                }, 1000);
+            } else if (roleParam === 'child') {
+                setTimeout(() => {
+                    document.getElementById('child-login-btn').click();
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html> 

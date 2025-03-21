@@ -1,0 +1,67 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1280" height="720" fill="#f5f5f5"/>
+  
+  <!-- App frame -->
+  <rect x="40" y="40" width="1200" height="640" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  
+  <!-- Header -->
+  <rect x="40" y="40" width="1200" height="80" fill="#3949ab" rx="8" ry="8"/>
+  <rect x="40" y="80" width="1200" height="40" fill="#3949ab" rx="0" ry="0"/>
+  
+  <!-- Header text -->
+  <text x="100" y="90" font-family="Arial, sans-serif" font-size="24" fill="#ffffff" font-weight="bold">Family Mount Olympus Bank</text>
+  
+  <!-- Navigation tabs -->
+  <rect x="100" y="120" width="180" height="40" fill="#303f9f" rx="8" ry="8"/>
+  <rect x="290" y="120" width="180" height="40" fill="#5c6bc0" rx="8" ry="8"/>
+  <rect x="480" y="120" width="180" height="40" fill="#5c6bc0" rx="8" ry="8"/>
+  <rect x="670" y="120" width="180" height="40" fill="#5c6bc0" rx="8" ry="8"/>
+  
+  <!-- Tab text -->
+  <text x="140" y="145" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">Dashboard</text>
+  <text x="380" y="145" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">Transactions</text>
+  <text x="570" y="145" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">Chores</text>
+  <text x="760" y="145" font-family="Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle">Goals</text>
+  
+  <!-- Balance card -->
+  <rect x="100" y="180" width="320" height="150" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  <text x="120" y="210" font-family="Arial, sans-serif" font-size="16" fill="#757575">Current Balance</text>
+  <text x="120" y="260" font-family="Arial, sans-serif" font-size="36" fill="#3949ab" font-weight="bold">$385.80</text>
+  <rect x="120" y="280" width="120" height="30" fill="#ffd835" rx="15" ry="15"/>
+  <text x="180" y="300" font-family="Arial, sans-serif" font-size="14" fill="#212121" text-anchor="middle">Update</text>
+  
+  <!-- Recent transactions -->
+  <rect x="100" y="350" width="320" height="280" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  <text x="120" y="380" font-family="Arial, sans-serif" font-size="16" fill="#757575">Recent Transactions</text>
+  <!-- Transaction rows -->
+  <rect x="120" y="400" width="280" height="40" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="120" y="450" width="280" height="40" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="120" y="500" width="280" height="40" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="120" y="550" width="280" height="40" fill="#f5f5f5" rx="4" ry="4"/>
+  
+  <!-- Chores -->
+  <rect x="440" y="180" width="320" height="450" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  <text x="460" y="210" font-family="Arial, sans-serif" font-size="16" fill="#757575">Active Chores</text>
+  <!-- Chore rows -->
+  <rect x="460" y="230" width="280" height="60" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="460" y="300" width="280" height="60" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="460" y="370" width="280" height="60" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="460" y="440" width="280" height="60" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="460" y="510" width="280" height="60" fill="#f5f5f5" rx="4" ry="4"/>
+  
+  <!-- Goals -->
+  <rect x="780" y="180" width="320" height="450" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="8" ry="8"/>
+  <text x="800" y="210" font-family="Arial, sans-serif" font-size="16" fill="#757575">Savings Goals</text>
+  <!-- Goal cards -->
+  <rect x="800" y="230" width="280" height="120" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="800" y="360" width="280" height="120" fill="#f5f5f5" rx="4" ry="4"/>
+  <rect x="800" y="490" width="280" height="120" fill="#f5f5f5" rx="4" ry="4"/>
+
+  <!-- Mount Olympus icon -->
+  <path d="M1120,75 L1140,55 L1160,75 L1140,95 Z" fill="#ffd835"/>
+  <text x="1140" y="80" font-family="Arial, sans-serif" font-size="16" fill="#3949ab" text-anchor="middle" font-weight="bold">Z</text>
+
+  <!-- Placeholder text -->
+  <text x="640" y="650" font-family="Arial, sans-serif" font-size="20" fill="#9e9e9e" text-anchor="middle" font-style="italic">Parent Dashboard Screenshot</text>
+</svg> 
