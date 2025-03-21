@@ -49,6 +49,9 @@
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="images/app-icons/favicon.ico" type="image/x-icon">
+    
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
     <!-- Application Loading Indicator -->
@@ -119,11 +122,22 @@
         <section id="parent-dashboard" class="dashboard-section">
             <header class="dashboard-header">
                 <h1>Zeus Dashboard: Overseeing Mount Olympus</h1>
-                <div class="header-controls">
-                    <div id="parent-firebase-status" class="firebase-status">Checking connection...</div>
-                    <button id="parent-logout-btn" class="logout-btn">Logout</button>
+                <div class="dashboard-actions">
+                    <button id="manual-sync-btn" class="sync-now-btn action-btn" onclick="DataManager.manualSync()">
+                        <i class="fa fa-refresh"></i> Force Cloud Sync
+                    </button>
                 </div>
             </header>
+            
+            <div class="top-bar">
+                <div class="connection-status offline">🔴 Using local storage (offline)</div>
+                <div class="top-bar-actions">
+                    <button id="manual-sync-btn" class="sync-now-btn action-btn" onclick="DataManager.manualSync()">
+                        <i class="fa fa-refresh"></i> Force Sync
+                    </button>
+                    <button id="parent-logout-btn" class="logout-btn">Logout</button>
+                </div>
+            </div>
             
             <div class="dashboard-content">
                 <div class="dashboard-sidebar">
@@ -294,7 +308,15 @@
                 <h1>Hermes Dashboard: Treasury of Olympus</h1>
                 <div class="header-controls">
                     <div id="child-firebase-status" class="firebase-status">Checking connection...</div>
-                    <button id="child-logout-btn" class="logout-btn">Logout</button>
+                    <div class="top-bar">
+                        <div class="connection-status offline">🔴 Using local storage (offline)</div>
+                        <div class="top-bar-actions">
+                            <button id="child-manual-sync-btn" class="sync-now-btn action-btn" onclick="DataManager.manualSync()">
+                                <i class="fa fa-refresh"></i> Force Sync
+                            </button>
+                            <button id="child-logout-btn" class="logout-btn">Logout</button>
+                        </div>
+                    </div>
                 </div>
             </header>
             

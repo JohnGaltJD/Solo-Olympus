@@ -107,75 +107,93 @@ const DataManager = {
             
             if (!window.firebase || !window.db) {
                 console.warn('[FIREBASE LISTENER] Firebase or db not available, cannot set up listener');
+                this.updateConnectionStatus(false);
                 return false;
             }
             
-            // Setup real-time listener
-            const docRef = db.collection('families').doc(this.familyId);
-            console.log('[FIREBASE LISTENER] Creating listener for document:', `families/${this.familyId}`);
-            
-            this.firebaseListener = docRef.onSnapshot(
-                snapshot => {
-                    console.log('[FIREBASE LISTENER] Received snapshot event', snapshot.exists ? 'document exists' : 'document does not exist');
-                    
-                    if (snapshot.exists) {
-                        console.log('[FIREBASE LISTENER] Received real-time update from Firebase');
-                        const firestoreData = snapshot.data();
-                        console.log('[FIREBASE LISTENER] Raw data:', JSON.stringify(firestoreData).substring(0, 100) + '...');
+            // Check connection first
+            this.checkFirebaseConnection().then(isConnected => {
+                if (!isConnected) {
+                    console.warn('[FIREBASE LISTENER] Firebase connection test failed, not setting up listener');
+                    return;
+                }
+                
+                // Setup real-time listener
+                const docRef = db.collection('families').doc(this.familyId);
+                console.log('[FIREBASE LISTENER] Creating listener for document:', `families/${this.familyId}`);
+                
+                this.firebaseListener = docRef.onSnapshot(
+                    snapshot => {
+                        console.log('[FIREBASE LISTENER] Received snapshot event', snapshot.exists ? 'document exists' : 'document does not exist');
                         
-                        // Only update if we're not in the middle of saving
-                        if (!this._isSaving) {
-                            console.log('[FIREBASE LISTENER] Updating local data from Firebase real-time update');
+                        // Update connection status to online since we received data
+                        this.updateConnectionStatus(true);
+                        
+                        if (snapshot.exists) {
+                            console.log('[FIREBASE LISTENER] Received real-time update from Firebase');
+                            const firestoreData = snapshot.data();
+                            console.log('[FIREBASE LISTENER] Raw data:', JSON.stringify(firestoreData).substring(0, 100) + '...');
                             
-                            // Validate and migrate data
-                            if (this.validateDataStructure(firestoreData)) {
-                                const migratedData = this.migrateData(firestoreData);
+                            // Only update if we're not in the middle of saving
+                            if (!this._isSaving) {
+                                console.log('[FIREBASE LISTENER] Updating local data from Firebase real-time update');
                                 
-                                // Check if data is different from current data
-                                const currentDataStr = JSON.stringify(this.data);
-                                const newDataStr = JSON.stringify(migratedData);
-                                
-                                if (currentDataStr !== newDataStr) {
-                                    console.log('[FIREBASE LISTENER] Data has changed, updating UI');
+                                // Validate and migrate data
+                                if (this.validateDataStructure(firestoreData)) {
+                                    const migratedData = this.migrateData(firestoreData);
                                     
-                                    // Update local data
-                                    this.data = migratedData;
+                                    // Check if data is different from current data
+                                    const currentDataStr = JSON.stringify(this.data);
+                                    const newDataStr = JSON.stringify(migratedData);
                                     
-                                    // Store as last known good data
-                                    this.lastGoodData = JSON.parse(JSON.stringify(this.data));
-                                    
-                                    // Update UI if UIManager is available
-                                    if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
-                                        console.log('[FIREBASE LISTENER] Refreshing UI after Firebase update');
-                                        UIManager.refreshAllData();
+                                    if (currentDataStr !== newDataStr) {
+                                        console.log('[FIREBASE LISTENER] Data has changed, updating UI');
                                         
-                                        // Show toast notification about data sync
-                                        if (window.UIManager && typeof UIManager.showToast === 'function') {
-                                            UIManager.showToast('Data synchronized from another device!', 'success');
+                                        // Update local data
+                                        this.data = migratedData;
+                                        
+                                        // Store as last known good data
+                                        this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                                        
+                                        // Update localStorage for backup
+                                        localStorage.setItem('olympusBank', JSON.stringify(this.data));
+                                        
+                                        // Update UI if UIManager is available
+                                        if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                                            console.log('[FIREBASE LISTENER] Refreshing UI after Firebase update');
+                                            UIManager.refreshAllData();
+                                            
+                                            // Show toast notification about data sync
+                                            if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                                UIManager.showToast('Data synchronized from cloud!', 'success');
+                                            }
                                         }
+                                    } else {
+                                        console.log('[FIREBASE LISTENER] Data unchanged, no UI update needed');
                                     }
                                 } else {
-                                    console.log('[FIREBASE LISTENER] Data unchanged, no UI update needed');
+                                    console.warn('[FIREBASE LISTENER] Invalid data structure received from Firebase');
                                 }
                             } else {
-                                console.warn('[FIREBASE LISTENER] Invalid data structure received from Firebase');
+                                console.log('[FIREBASE LISTENER] Ignoring Firebase update as we are currently saving');
                             }
                         } else {
-                            console.log('[FIREBASE LISTENER] Ignoring Firebase update as we are currently saving');
+                            console.log('[FIREBASE LISTENER] No data exists in Firebase for this family ID');
                         }
-                    } else {
-                        console.log('[FIREBASE LISTENER] No data exists in Firebase for this family ID');
+                    }, 
+                    error => {
+                        console.error('[FIREBASE LISTENER] Error in Firebase real-time listener:', error);
+                        this.updateConnectionStatus(false);
                     }
-                }, 
-                error => {
-                    console.error('[FIREBASE LISTENER] Error in Firebase real-time listener:', error);
-                }
-            );
+                );
+                
+                console.log('[FIREBASE LISTENER] Listener setup complete');
+            });
             
-            console.log('[FIREBASE LISTENER] Listener setup complete');
             return true;
         } catch (error) {
             console.error('[FIREBASE LISTENER] Error setting up Firebase listener:', error);
+            this.updateConnectionStatus(false);
             return false;
         }
     },
@@ -1479,95 +1497,295 @@ const DataManager = {
      */
     async forceSyncFromFirebase() {
         try {
-            console.log('Forcing sync from Firebase...');
+            console.log('[FORCE SYNC] Starting forceful sync from Firebase...');
+            
+            // Update UI to show sync is happening
+            if (window.UIManager && typeof UIManager.showToast === 'function') {
+                UIManager.showToast('Syncing with cloud...', 'info');
+            }
             
             // Check if Firebase is available
             if (!window.firebase || !window.db) {
-                console.warn('Firebase not available, cannot force sync');
+                console.warn('[FORCE SYNC] Firebase not available, cannot force sync');
+                if (window.UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast('Firebase not available. Check connection.', 'error');
+                }
                 return false;
             }
             
             // Try to get data from Firebase
+            console.log('[FORCE SYNC] Attempting to fetch data from Firebase for family:', this.familyId);
             const docRef = db.collection('families').doc(this.familyId);
-            const doc = await docRef.get();
             
-            if (doc.exists) {
-                console.log('Found data in Firebase for family:', this.familyId);
-                const firestoreData = doc.data();
+            try {
+                const doc = await docRef.get();
                 
-                // Validate the data structure
-                if (this.validateDataStructure(firestoreData)) {
-                    console.log('Firebase data is valid, using it');
+                if (doc.exists) {
+                    console.log('[FORCE SYNC] Found data in Firebase for family:', this.familyId);
+                    const firestoreData = doc.data();
+                    console.log('[FORCE SYNC] Raw data received:', JSON.stringify(firestoreData).substring(0, 100) + '...');
                     
-                    // Apply any necessary migrations
-                    const migratedData = this.migrateData(firestoreData);
-                    
-                    // Use the migrated data
-                    this.data = migratedData;
-                    
-                    // Store as last known good data
-                    this.lastGoodData = JSON.parse(JSON.stringify(this.data));
-                    
-                    // Clear localStorage and update it with Firebase data
-                    localStorage.setItem('olympusBank', JSON.stringify(this.data));
-                    
-                    console.log('Successfully synced data from Firebase');
-                    
-                    // Update UI if UIManager is available
-                    if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
-                        UIManager.refreshAllData();
+                    // Validate the data structure
+                    if (this.validateDataStructure(firestoreData)) {
+                        console.log('[FORCE SYNC] Firebase data is valid, using it');
                         
-                        // Show a toast notification if available
-                        if (window.UIManager && typeof UIManager.showToast === 'function') {
-                            UIManager.showToast('Data synchronized from cloud!', 'success');
+                        // Apply any necessary migrations
+                        const migratedData = this.migrateData(firestoreData);
+                        
+                        // Use the migrated data
+                        this.data = migratedData;
+                        
+                        // Store as last known good data
+                        this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                        
+                        // Clear localStorage and update it with Firebase data
+                        localStorage.setItem('olympusBank', JSON.stringify(this.data));
+                        
+                        console.log('[FORCE SYNC] Successfully synced data from Firebase');
+                        
+                        // Update connection status
+                        this.updateConnectionStatus(true);
+                        
+                        // Update UI if UIManager is available
+                        if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                            UIManager.refreshAllData();
+                            
+                            // Show a toast notification if available
+                            if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                UIManager.showToast('Data synchronized from cloud!', 'success');
+                            }
                         }
+                        
+                        return true;
+                    } else {
+                        console.warn('[FORCE SYNC] Invalid data structure in Firebase');
+                        if (window.UIManager && typeof UIManager.showToast === 'function') {
+                            UIManager.showToast('Invalid data structure in cloud', 'error');
+                        }
+                        // Fall back to regular data loading
+                        await this.restoreData(true);
+                        return false;
+                    }
+                } else {
+                    console.log('[FORCE SYNC] No data found in Firebase for family:', this.familyId);
+                    
+                    // Check if there's data in localStorage
+                    const localData = localStorage.getItem('olympusBank');
+                    
+                    if (localData) {
+                        try {
+                            // Parse and validate the local data
+                            const parsedData = JSON.parse(localData);
+                            
+                            if (this.validateDataStructure(parsedData)) {
+                                // If we have valid local data but no Firebase data,
+                                // use the local data and sync it to Firebase
+                                console.log('[FORCE SYNC] Using local data and syncing to Firebase');
+                                this.data = this.migrateData(parsedData);
+                                this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                                
+                                // Save to Firebase
+                                await this.saveData(true);
+                                
+                                // Update connection status
+                                this.updateConnectionStatus(true);
+                                
+                                if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                    UIManager.showToast('Local data uploaded to cloud', 'success');
+                                }
+                                
+                                return true;
+                            }
+                        } catch (e) {
+                            console.error('[FORCE SYNC] Error parsing local data:', e);
+                        }
+                    }
+                    
+                    // If no valid data found anywhere, use default data
+                    console.log('[FORCE SYNC] Using default data and creating new cloud record');
+                    this.data = JSON.parse(JSON.stringify(this.defaultData));
+                    this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                    await this.saveData(true);
+                    
+                    // Update connection status
+                    this.updateConnectionStatus(true);
+                    
+                    if (window.UIManager && typeof UIManager.showToast === 'function') {
+                        UIManager.showToast('Created new data in cloud', 'success');
                     }
                     
                     return true;
-                } else {
-                    console.warn('Invalid data structure in Firebase');
-                    // Fall back to regular data loading
-                    await this.restoreData(true);
-                    return false;
                 }
-            } else {
-                console.log('No data found in Firebase for family:', this.familyId);
-                
-                // Check if there's data in localStorage
-                const localData = localStorage.getItem('olympusBank');
-                
-                if (localData) {
-                    try {
-                        // Parse and validate the local data
-                        const parsedData = JSON.parse(localData);
-                        
-                        if (this.validateDataStructure(parsedData)) {
-                            // If we have valid local data but no Firebase data,
-                            // use the local data and sync it to Firebase
-                            console.log('Using local data and syncing to Firebase');
-                            this.data = this.migrateData(parsedData);
-                            this.lastGoodData = JSON.parse(JSON.stringify(this.data));
-                            
-                            // Save to Firebase
-                            await this.saveData(true);
-                            return true;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing local data:', e);
-                    }
+            } catch (fetchError) {
+                console.error('[FORCE SYNC] Error fetching data from Firebase:', fetchError);
+                if (window.UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast('Failed to connect to cloud database', 'error');
                 }
                 
-                // If no valid data found anywhere, use default data
-                console.log('Using default data');
-                this.data = JSON.parse(JSON.stringify(this.defaultData));
-                this.lastGoodData = JSON.parse(JSON.stringify(this.data));
-                await this.saveData(true);
-                return true;
+                // Update connection status
+                this.updateConnectionStatus(false);
+                
+                // Fall back to regular data loading
+                await this.restoreData(false);
+                return false;
             }
         } catch (error) {
-            console.error('Error forcing sync from Firebase:', error);
+            console.error('[FORCE SYNC] Critical error during sync:', error);
+            if (window.UIManager && typeof UIManager.showToast === 'function') {
+                UIManager.showToast('Sync failed: ' + error.message, 'error');
+            }
+            
+            // Update connection status
+            this.updateConnectionStatus(false);
+            
             // Fall back to regular data loading
-            await this.restoreData(true);
+            await this.restoreData(false);
+            return false;
+        }
+    },
+    
+    /**
+     * Manually syncs data with Firebase, forcing a refresh from the cloud
+     * Returns a promise that resolves when sync is complete
+     * @returns {Promise<boolean>} - Promise resolving to true if sync successful, false otherwise
+     */
+    manualSync: function() {
+        console.log("Manual sync initiated");
+        return new Promise((resolve, reject) => {
+            // Check if Firebase is available
+            if (!window.firebase || !window.firebase.firestore) {
+                console.error("Firebase not available for manual sync");
+                reject(new Error("Firebase not available"));
+                return;
+            }
+
+            // Check if we have a family ID
+            const familyId = this.getFamilyId();
+            if (!familyId) {
+                console.error("No family ID available for manual sync");
+                reject(new Error("No family ID available"));
+                return;
+            }
+
+            console.log(`Manual sync: Fetching data for family ${familyId}`);
+            const db = firebase.firestore();
+            
+            // Get the document from Firebase
+            db.collection("families").doc(familyId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const firebaseData = doc.data();
+                        console.log("Manual sync: Data retrieved from Firebase", firebaseData);
+                        
+                        // Validate data structure
+                        if (!firebaseData || typeof firebaseData !== 'object') {
+                            console.error("Manual sync: Invalid data structure in Firebase");
+                            reject(new Error("Invalid data structure in Firebase"));
+                            return;
+                        }
+                        
+                        // Import the data from Firebase
+                        try {
+                            // Clear current data first
+                            this.accounts = {};
+                            this.transactions = [];
+                            this.goals = [];
+                            this.chores = [];
+                            
+                            // Restore the data from Firebase
+                            this.restoreData(firebaseData);
+                            
+                            // Force save to localStorage with the updated data
+                            this.saveToLocalStorage();
+                            
+                            // Update the UI
+                            this.updateAllUI();
+                            
+                            console.log("Manual sync: Successfully synchronized with Firebase");
+                            resolve(true);
+                        } catch (error) {
+                            console.error("Manual sync: Error processing data", error);
+                            reject(error);
+                        }
+                    } else {
+                        console.error("Manual sync: No data found in Firebase for this family ID");
+                        reject(new Error("No data found in Firebase"));
+                    }
+                })
+                .catch(error => {
+                    console.error("Manual sync: Error fetching data from Firebase", error);
+                    reject(error);
+                });
+        });
+    },
+    
+    /**
+     * Check Firebase connection and update status
+     * @returns {Promise<boolean>} Connection status
+     */
+    async checkFirebaseConnection() {
+        try {
+            // First check if Firebase is available
+            if (!window.firebase || !window.db) {
+                console.warn('[CONNECTION] Firebase not available');
+                this.updateConnectionStatus(false);
+                return false;
+            }
+            
+            // Try to access Firestore
+            try {
+                // Perform a simple database operation to check connectivity
+                const testRef = db.collection('_connection_test').doc('test');
+                await testRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                
+                console.log('[CONNECTION] Successfully connected to Firebase');
+                this.updateConnectionStatus(true);
+                return true;
+            } catch (firebaseError) {
+                console.error('[CONNECTION] Firebase connection test failed:', firebaseError);
+                this.updateConnectionStatus(false);
+                return false;
+            }
+        } catch (error) {
+            console.error('[CONNECTION] Error checking Firebase connection:', error);
+            this.updateConnectionStatus(false);
+            return false;
+        }
+    },
+    
+    /**
+     * Update connection status indicator
+     * @param {boolean} isOnline - Whether the app is connected to Firebase
+     */
+    updateConnectionStatus(isOnline) {
+        try {
+            // Update the connection status in localStorage for persistence
+            localStorage.setItem('olympusBankConnectionStatus', isOnline ? 'online' : 'offline');
+            
+            // Update the connection status indicators in the UI
+            const statusIndicators = document.querySelectorAll('.connection-status');
+            
+            statusIndicators.forEach(indicator => {
+                if (isOnline) {
+                    indicator.innerHTML = '🟢 Using cloud storage (online)';
+                    indicator.classList.remove('offline');
+                    indicator.classList.add('online');
+                } else {
+                    indicator.innerHTML = '🔴 Using local storage (offline)';
+                    indicator.classList.remove('online');
+                    indicator.classList.add('offline');
+                }
+            });
+            
+            // Show/hide the "Sync Now" button based on connection status
+            const syncButtons = document.querySelectorAll('.sync-now-btn');
+            syncButtons.forEach(button => {
+                button.style.display = isOnline ? 'block' : 'none';
+            });
+            
+            return true;
+        } catch (error) {
+            console.error('[CONNECTION] Error updating connection status:', error);
             return false;
         }
     }
