@@ -40,6 +40,9 @@ const DataManager = {
     // Family ID for multi-device support (default for backward compatibility)
     familyId: 'default-family',
     
+    // Firebase database listener
+    firebaseListener: null,
+    
     /**
      * Initialize the data manager
      * @param {boolean} forceReset - Whether to force a reset to default data
@@ -64,6 +67,11 @@ const DataManager = {
                 await this.restoreData(useFirebase);
             }
             
+            // Set up real-time Firebase listener if Firebase is available
+            if (useFirebase) {
+                this.setupFirebaseListener();
+            }
+            
             // Schedule interest calculations
             this.scheduleInterestCalculation();
             
@@ -74,6 +82,69 @@ const DataManager = {
             return false;
         }
     },
+    
+    /**
+     * Set up real-time Firebase listener for cross-device synchronization
+     */
+    setupFirebaseListener() {
+        try {
+            console.log('Setting up Firebase real-time listener for family:', this.familyId);
+            
+            // Clean up any existing listener
+            if (this.firebaseListener) {
+                this.firebaseListener();
+                this.firebaseListener = null;
+            }
+            
+            // Setup real-time listener
+            const docRef = db.collection('families').doc(this.familyId);
+            this.firebaseListener = docRef.onSnapshot(snapshot => {
+                if (snapshot.exists) {
+                    console.log('Received real-time update from Firebase');
+                    const firestoreData = snapshot.data();
+                    
+                    // Only update if we're not in the middle of saving
+                    if (!this._isSaving) {
+                        console.log('Updating local data from Firebase real-time update');
+                        
+                        // Validate and migrate data
+                        if (this.validateDataStructure(firestoreData)) {
+                            const migratedData = this.migrateData(firestoreData);
+                            
+                            // Update local data
+                            this.data = migratedData;
+                            
+                            // Store as last known good data
+                            this.lastGoodData = JSON.parse(JSON.stringify(this.data));
+                            
+                            // Update UI if UIManager is available
+                            if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                                console.log('Refreshing UI after Firebase update');
+                                UIManager.refreshAllData();
+                            }
+                        } else {
+                            console.warn('Invalid data structure received from Firebase');
+                        }
+                    } else {
+                        console.log('Ignoring Firebase update as we are currently saving');
+                    }
+                } else {
+                    console.log('No data exists in Firebase for this family ID');
+                }
+            }, error => {
+                console.error('Error in Firebase real-time listener:', error);
+            });
+            
+            console.log('Firebase listener setup complete');
+            return true;
+        } catch (error) {
+            console.error('Error setting up Firebase listener:', error);
+            return false;
+        }
+    },
+    
+    // Flag to prevent update loops when saving
+    _isSaving: false,
     
     /**
      * Restore data from Firebase or localStorage
@@ -206,6 +277,9 @@ const DataManager = {
         try {
             if (!this.data) return false;
             
+            // Set saving flag to prevent update loops
+            this._isSaving = true;
+            
             // Set data version
             this.data.dataVersion = this.dataVersion;
             
@@ -224,6 +298,7 @@ const DataManager = {
                 } catch (firebaseError) {
                     console.error('Error saving to Firebase:', firebaseError);
                     // Firebase save failed, but localStorage succeeded
+                    this._isSaving = false;
                     return true;
                 }
             }
@@ -233,9 +308,13 @@ const DataManager = {
             // Update last good data after successful save
             this.lastGoodData = JSON.parse(JSON.stringify(this.data));
             
+            // Clear saving flag
+            this._isSaving = false;
+            
             return true;
         } catch (error) {
             console.error('Error saving data:', error);
+            this._isSaving = false;
             return false;
         }
     },
@@ -1256,21 +1335,25 @@ const DataManager = {
         try {
             if (!familyId) return false;
             
-            const oldFamilyId = this.familyId;
+            console.log(`Changing family ID from ${this.familyId} to ${familyId}`);
+            
+            // Clean up existing Firebase listener
+            if (this.firebaseListener) {
+                this.firebaseListener();
+                this.firebaseListener = null;
+            }
+            
+            // Update family ID
             this.familyId = familyId;
+            localStorage.setItem('olympusBankFamilyId', this.familyId);
             
-            // Store family ID in localStorage
-            localStorage.setItem('olympusBankFamilyId', familyId);
+            // Restore data from Firebase with new family ID
+            const useFirebase = window.firebase && window.db;
+            await this.restoreData(useFirebase);
             
-            // If family ID changed, reload data
-            if (oldFamilyId !== familyId) {
-                console.log(`Family ID changed from ${oldFamilyId} to ${familyId}, reloading data`);
-                
-                // Check if Firebase is available
-                const useFirebase = window.firebase && window.db;
-                
-                // Restore data for the new family ID
-                await this.restoreData(useFirebase);
+            // Set up new Firebase listener
+            if (useFirebase) {
+                this.setupFirebaseListener();
             }
             
             return true;
