@@ -10,7 +10,7 @@ const firebaseConfig = {
     messagingSenderId: "602539148372",
     appId: "1:602539148372:web:9d48c00bd2a41aaa75d9c1",
     measurementId: "G-4F6X3Y10J9",
-    // Adding databaseURL based on projectId
+    // Make sure we have the proper database URL
     databaseURL: "https://mount-olympus-2415-default-rtdb.firebaseio.com"
 };
 
@@ -21,12 +21,69 @@ let db;
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Firebase configuration initializing...");
     
-    // 1. Initialize Firebase with retry logic
-    initializeFirebaseWithRetry(3); // Try 3 times
+    // Load required scripts
+    const requiredScripts = [
+        { id: "font-awesome", src: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css", isCSS: true },
+        { id: "firebase-app", src: "https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js" },
+        { id: "firebase-firestore", src: "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore-compat.js" }
+    ];
     
-    // 2. Setup cross-browser sync using localStorage for backup
+    loadScripts(requiredScripts, () => {
+        // Initialize Firebase with retry logic
+        initializeFirebaseWithRetry(3); // Try 3 times
+    });
+    
+    // Setup cross-browser sync using localStorage for backup
     setupLocalStorageSync();
 });
+
+/**
+ * Load multiple scripts and call the callback when all are loaded
+ */
+function loadScripts(scripts, callback) {
+    let loaded = 0;
+    const total = scripts.length;
+    
+    function scriptLoaded() {
+        loaded++;
+        if (loaded === total) {
+            callback();
+        }
+    }
+    
+    scripts.forEach(script => {
+        if (document.getElementById(script.id)) {
+            scriptLoaded();
+            return;
+        }
+        
+        const element = script.isCSS ? 
+            document.createElement('link') : 
+            document.createElement('script');
+            
+        if (script.isCSS) {
+            element.rel = 'stylesheet';
+            element.href = script.src;
+        } else {
+            element.src = script.src;
+            element.async = true;
+        }
+        
+        element.id = script.id;
+        element.onload = scriptLoaded;
+        element.onerror = (err) => {
+            console.error(`Failed to load ${script.id}:`, err);
+            scriptLoaded(); // Continue with other scripts
+        };
+        
+        document.head.appendChild(element);
+    });
+    
+    // If no scripts to load, call callback immediately
+    if (total === 0) {
+        callback();
+    }
+}
 
 /**
  * Initialize Firebase with retry logic
@@ -39,8 +96,15 @@ function initializeFirebaseWithRetry(maxRetries, attempt = 1) {
         
         // Check if Firebase SDK is available
         if (typeof firebase === 'undefined') {
-            console.error("Firebase SDK not loaded. Loading script dynamically...");
-            loadFirebaseSDK(() => initializeFirebaseWithRetry(maxRetries, attempt));
+            console.error("Firebase SDK not loaded yet, waiting...");
+            if (attempt < maxRetries) {
+                setTimeout(() => {
+                    initializeFirebaseWithRetry(maxRetries, attempt + 1);
+                }, 1000);
+            } else {
+                console.error("Failed to load Firebase after multiple attempts");
+                updateConnectionStatus(false);
+            }
             return;
         }
         
@@ -89,52 +153,6 @@ function initializeFirebaseWithRetry(maxRetries, attempt = 1) {
 }
 
 /**
- * Dynamically load Firebase SDK if not already loaded
- * @param {Function} callback - Function to call when loaded
- */
-function loadFirebaseSDK(callback) {
-    const scripts = [
-        { src: "https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js", id: "firebase-app" },
-        { src: "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore-compat.js", id: "firebase-firestore" }
-    ];
-    
-    let scriptsLoaded = 0;
-    
-    scripts.forEach(script => {
-        // Check if script is already loaded
-        if (document.getElementById(script.id)) {
-            scriptsLoaded++;
-            if (scriptsLoaded === scripts.length) {
-                callback();
-            }
-            return;
-        }
-        
-        // Create script element
-        const scriptElement = document.createElement("script");
-        scriptElement.src = script.src;
-        scriptElement.id = script.id;
-        scriptElement.async = true;
-        
-        // Add event listeners
-        scriptElement.onload = () => {
-            console.log(`Loaded ${script.id}`);
-            scriptsLoaded++;
-            if (scriptsLoaded === scripts.length) {
-                callback();
-            }
-        };
-        
-        scriptElement.onerror = (error) => {
-            console.error(`Failed to load ${script.id}:`, error);
-        };
-        
-        // Append to head
-        document.head.appendChild(scriptElement);
-    });
-}
-
-/**
  * Regular check of connection status
  */
 function checkConnectionStatus() {
@@ -169,6 +187,7 @@ function checkConnectionStatus() {
 async function checkFirebaseConnection() {
     // If Firebase isn't initialized, return navigator.onLine
     if (!firebase || !firebase.firestore) {
+        console.log("Firebase not initialized, using browser online status");
         return navigator.onLine;
     }
     
@@ -182,7 +201,7 @@ async function checkFirebaseConnection() {
         
         // Try to get data with timeout
         const connectionTest = Promise.race([
-            db.collection("olympus_connection_test").doc("test").get(),
+            db.collection("olympus_connection_test").doc("test").set({ timestamp: Date.now() }),
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
         ]);
         
@@ -190,7 +209,25 @@ async function checkFirebaseConnection() {
         console.log(`Firebase connection test passed in ${Date.now() - timestamp}ms`);
         return true;
     } catch (error) {
-        console.warn("Firebase connection test failed:", error);
+        console.warn("Firebase connection test failed:", error.message);
+        
+        // If it's a permission error, try accessing the database URL directly
+        if (error.message && error.message.includes("permission")) {
+            console.log("Detected permission error, checking if Firebase is reachable...");
+            try {
+                // Try to access the database URL to check if Firebase is reachable
+                await fetch(`https://${firebaseConfig.projectId}.firebaseio.com/.json?shallow=true`, { 
+                    method: 'GET',
+                    mode: 'no-cors' // This works around CORS issues
+                });
+                console.log("Firebase is reachable but permissions need to be fixed");
+                return true; // Firebase is reachable even if permissions aren't set correctly
+            } catch (fetchError) {
+                console.error("Firebase is not reachable:", fetchError);
+                return false;
+            }
+        }
+        
         return false;
     }
 }
