@@ -3,13 +3,15 @@
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyCksoGvnP4D5m_uEKr8n6J3UKUlDNiJPSA",
-    authDomain: "family-olympus-bank.firebaseapp.com",
-    projectId: "family-olympus-bank",
-    storageBucket: "family-olympus-bank.appspot.com",
-    messagingSenderId: "446249540339",
-    appId: "1:446249540339:web:ad2f7ee7d63c8ece9ad17e",
-    databaseURL: "https://family-olympus-bank-default-rtdb.firebaseio.com"
+    apiKey: "AIzaSyASylSKRaBpnpZUn8ji4mDaNLiq0ioxfao",
+    authDomain: "mount-olympus-2415.firebaseapp.com",
+    projectId: "mount-olympus-2415",
+    storageBucket: "mount-olympus-2415.firebasestorage.app",
+    messagingSenderId: "602539148372",
+    appId: "1:602539148372:web:9d48c00bd2a41aaa75d9c1",
+    measurementId: "G-4F6X3Y10J9",
+    // Adding databaseURL based on projectId
+    databaseURL: "https://mount-olympus-2415-default-rtdb.firebaseio.com"
 };
 
 // Global references
@@ -92,8 +94,8 @@ function initializeFirebaseWithRetry(maxRetries, attempt = 1) {
  */
 function loadFirebaseSDK(callback) {
     const scripts = [
-        { src: "https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js", id: "firebase-app" },
-        { src: "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js", id: "firebase-firestore" }
+        { src: "https://www.gstatic.com/firebasejs/9.19.1/firebase-app-compat.js", id: "firebase-app" },
+        { src: "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore-compat.js", id: "firebase-firestore" }
     ];
     
     let scriptsLoaded = 0;
@@ -180,7 +182,7 @@ async function checkFirebaseConnection() {
         
         // Try to get data with timeout
         const connectionTest = Promise.race([
-            db.collection("connection_test").doc("test").get(),
+            db.collection("olympus_connection_test").doc("test").get(),
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
         ]);
         

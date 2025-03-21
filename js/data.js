@@ -119,8 +119,8 @@ const DataManager = {
                 }
                 
                 // Setup real-time listener
-                const docRef = db.collection('families').doc(this.familyId);
-                console.log('[FIREBASE LISTENER] Creating listener for document:', `families/${this.familyId}`);
+                const docRef = db.collection('olympus_families').doc(this.familyId);
+                console.log('[FIREBASE LISTENER] Creating listener for document:', `olympus_families/${this.familyId}`);
                 
                 this.firebaseListener = docRef.onSnapshot(
                     snapshot => {
@@ -214,7 +214,7 @@ const DataManager = {
             if (useFirebase) {
                 console.log('Attempting to restore data from Firebase');
                 try {
-                    const docRef = db.collection('families').doc(this.familyId);
+                    const docRef = db.collection('olympus_families').doc(this.familyId);
                     const doc = await docRef.get();
                     
                     if (doc.exists) {
@@ -348,7 +348,7 @@ const DataManager = {
             const useFirebase = (window.firebase && window.db) || forceFirebase;
             if (useFirebase) {
                 try {
-                    await db.collection('families').doc(this.familyId).set(this.data);
+                    await db.collection('olympus_families').doc(this.familyId).set(this.data);
                     console.log('Data saved to Firebase successfully');
                 } catch (firebaseError) {
                     console.error('Error saving to Firebase:', firebaseError);
@@ -1417,7 +1417,7 @@ const DataManager = {
             if (useFirebase) {
                 try {
                     console.log(`[DATA SYNC] Checking if data exists for family ID: ${familyId}`);
-                    const docRef = db.collection('families').doc(familyId);
+                    const docRef = db.collection('olympus_families').doc(familyId);
                     const doc = await docRef.get();
                     
                     if (doc.exists) {
@@ -1518,7 +1518,7 @@ const DataManager = {
             
             // Get data from Firebase
             console.log(`Getting data from Firebase for family: ${this.familyId}`);
-            const docRef = window.db.collection('families').doc(this.familyId);
+            const docRef = window.db.collection('olympus_families').doc(this.familyId);
             const doc = await docRef.get();
             
             if (doc.exists) {

@@ -374,7 +374,7 @@ const AuthManager = {
             
             if (window.firebase && window.db) {
                 try {
-                    const docRef = db.collection('families').doc(familyCode.trim().toLowerCase());
+                    const docRef = db.collection('olympus_families').doc(familyCode.trim().toLowerCase());
                     const doc = await docRef.get();
                     isExistingFamily = doc.exists;
                     console.log(`Family code ${familyCode} exists in Firebase: ${isExistingFamily}`);
