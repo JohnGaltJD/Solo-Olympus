@@ -1,6 +1,6 @@
-# Hosting Guide for Family Mount Olympus Bank
+# Hosting Guide for Mount Olympus Treasury
 
-This guide provides instructions for hosting your Family Mount Olympus Bank application online so your family can access it from any device.
+This guide provides instructions for hosting your Mount Olympus Treasury application online so your family can access it from any device.
 
 ## Option 1: Using Your Existing Domain (Recommended)
 
@@ -38,6 +38,7 @@ If you already have a domain, this is the most professional approach.
    - After DNS propagation (may take 24-48 hours), visit your domain
    - Test all features work correctly
    - Test on different devices and browsers
+   - Be sure to check the new login page (`login.html`) functions correctly
 
 ## Option 2: Free Hosting (Quick Setup)
 
@@ -51,6 +52,7 @@ If you don't want to use your domain or need a temporary solution:
 4. Go to Settings > Pages
 5. Select the main branch as the source
 6. Your site will be published at `https://yourusername.github.io/repositoryname/`
+7. Access the app by navigating to `https://yourusername.github.io/repositoryname/login.html`
 
 ### Using Netlify Drop
 
@@ -58,6 +60,7 @@ If you don't want to use your domain or need a temporary solution:
 2. Drag and drop your entire project folder
 3. Netlify will provide a random subdomain like `https://random-name-123456.netlify.app`
 4. You can change the subdomain name in the site settings
+5. Access the app by navigating to your Netlify subdomain + `/login.html`
 
 ## Option 3: Running on a Home Server
 
@@ -66,12 +69,22 @@ If you prefer to host within your home network:
 1. Use a computer that can stay on consistently
 2. Install a web server like Apache or Nginx
 3. Configure the web server to serve your project files
-4. For local network access only: Access via local IP (e.g., `http://192.168.1.100`)
+4. For local network access only: Access via local IP (e.g., `http://192.168.1.100/login.html`)
 5. For external access: Configure port forwarding on your router and use a dynamic DNS service
+
+## UI Update Considerations
+
+The application now features a modernized UI with a dedicated login page. When hosting, keep these points in mind:
+
+- The entry point is now `login.html` rather than `index.html`
+- CSS files include a new `tailwind.css` file that provides utility classes
+- Make sure all files are uploaded, including any new images
+- The app is now more responsive and should work well on all device sizes
+- For the best experience, use a modern browser that supports CSS Grid and Flexbox
 
 ## Data Persistence Considerations
 
-The Family Mount Olympus Bank now uses Firebase Firestore for data storage, which means:
+The Mount Olympus Treasury uses Firebase Firestore for data storage, which means:
 
 - Data is stored in the cloud and can be accessed from any device
 - All family members can use the same account from different devices
@@ -93,7 +106,7 @@ The Family Mount Olympus Bank now uses Firebase Firestore for data storage, whic
 3. **Register Your Web App**
    - In the Firebase console, click the gear icon (Project settings)
    - In the "Your apps" section, click the web icon (</>) to add a web app
-   - Give your app a nickname (e.g., "Mount Olympus Bank")
+   - Give your app a nickname (e.g., "Mount Olympus Treasury")
    - Register the app (no need to set up Firebase Hosting yet)
    
 4. **Get Your Firebase Config**
@@ -154,6 +167,9 @@ If family members report seeing different data across devices:
 
    - **Issue**: Synchronization conflicts
      **Solution**: The most recently saved data usually takes precedence; use Force Cloud Sync to resolve
+
+   - **Issue**: Login page not redirecting properly
+     **Solution**: Make sure cookies and localStorage are enabled in your browser
 
 ### Security Considerations
 
