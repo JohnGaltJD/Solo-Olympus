@@ -238,54 +238,92 @@ async function checkFirebaseConnection() {
 function setupLocalStorageSync() {
     console.log("Setting up localStorage sync between browser tabs as backup");
     
+    // Get the family ID for sync key
+    const familyId = localStorage.getItem('olympusBankFamilyId') || 'default-family';
+    console.log("Using family ID for sync:", familyId);
+    
+    // Create unique keys for this family
+    const SYNC_KEY = `olympusBankSync_${familyId}`;
+    const DATA_KEY = `olympusBank_${familyId}`;
+    
+    // Save the standard data key for backward compatibility
+    localStorage.setItem('olympusBank', localStorage.getItem(DATA_KEY) || '{}');
+    
     // Create a function to trigger updates in other tabs
     window.triggerCrossBrowserSync = function() {
-        // Include a data snapshot and timestamp
-        const syncData = {
-            timestamp: Date.now(),
-            lastSyncedData: localStorage.getItem('olympusBank')
-        };
-        
-        // Store the sync data to trigger storage event in other tabs
-        localStorage.setItem('olympusBankSync', JSON.stringify(syncData));
-        console.log("Cross-browser sync triggered with data snapshot");
+        try {
+            // Include a data snapshot and timestamp
+            const syncData = {
+                timestamp: Date.now(),
+                lastSyncedData: localStorage.getItem(DATA_KEY) || localStorage.getItem('olympusBank')
+            };
+            
+            // Ensure we have data to sync
+            if (!syncData.lastSyncedData || syncData.lastSyncedData === '{}') {
+                console.warn("No data to sync - aborting cross-browser sync");
+                return false;
+            }
+            
+            // Store the sync data to trigger storage event in other tabs
+            localStorage.setItem(SYNC_KEY, JSON.stringify(syncData));
+            console.log("Cross-browser sync triggered with data snapshot");
+            
+            // Force a delay to ensure storage event fires in other tabs
+            setTimeout(() => {
+                // Remove and reset to ensure future events trigger
+                localStorage.removeItem(SYNC_KEY);
+                setTimeout(() => {
+                    localStorage.setItem(`${SYNC_KEY}_ready`, Date.now().toString());
+                }, 100);
+            }, 100);
+            
+            return true;
+        } catch (error) {
+            console.error("Error triggering cross-browser sync:", error);
+            return false;
+        }
     };
     
     // Listen for storage events from other tabs
     window.addEventListener('storage', function(e) {
         // Only respond to our sync signal
-        if (e.key === 'olympusBankSync') {
-            console.log("Received sync signal from another tab");
+        if (e.key === SYNC_KEY) {
+            console.log("Received sync signal from another tab with key:", e.key);
             
             try {
                 // Parse the sync data including the data snapshot
                 const syncData = JSON.parse(e.newValue);
                 
                 if (syncData && syncData.lastSyncedData) {
-                    console.log("Received data snapshot from another tab");
+                    console.log("Received data snapshot from another tab, timestamp:", new Date(syncData.timestamp).toISOString());
                     
-                    // Store the received data in localStorage
+                    // Store the received data in localStorage for this family
+                    localStorage.setItem(DATA_KEY, syncData.lastSyncedData);
+                    
+                    // Also update the standard key for backward compatibility
                     localStorage.setItem('olympusBank', syncData.lastSyncedData);
                     
-                    // Reload data from localStorage
-                    if (window.DataManager && typeof DataManager.loadFromLocalStorage === 'function') {
-                        DataManager.loadFromLocalStorage();
-                        console.log("Data reloaded from another tab's snapshot");
-                        
-                        // Update UI if UIManager exists
-                        if (window.UIManager) {
-                            if (typeof UIManager.refreshAllData === 'function') {
-                                UIManager.refreshAllData();
-                            } else if (typeof UIManager.updateUI === 'function') {
-                                UIManager.updateUI();
+                    // Reload data from localStorage with a slight delay to ensure data is saved
+                    setTimeout(() => {
+                        if (window.DataManager && typeof DataManager.loadFromLocalStorage === 'function') {
+                            DataManager.loadFromLocalStorage();
+                            console.log("Data reloaded from another tab's snapshot");
+                            
+                            // Update UI if UIManager exists
+                            if (window.UIManager) {
+                                if (typeof UIManager.refreshAllData === 'function') {
+                                    UIManager.refreshAllData();
+                                } else if (typeof UIManager.updateUI === 'function') {
+                                    UIManager.updateUI();
+                                }
+                            }
+                            
+                            // Show toast if available
+                            if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                UIManager.showToast("Data synchronized from another window", "info");
                             }
                         }
-                        
-                        // Show toast if available
-                        if (window.UIManager && typeof UIManager.showToast === 'function') {
-                            UIManager.showToast("Data synchronized from another window", "info");
-                        }
-                    }
+                    }, 200);
                 } else {
                     console.warn("Received sync signal without data snapshot");
                     // Fallback to the old method of just reloading from localStorage
@@ -302,6 +340,14 @@ function setupLocalStorageSync() {
             }
         }
     });
+    
+    // Initialize with existing data if available
+    const existingData = localStorage.getItem('olympusBank');
+    if (existingData && existingData !== '{}') {
+        localStorage.setItem(DATA_KEY, existingData);
+    }
+    
+    console.log("LocalStorage sync setup complete");
 }
 
 /**

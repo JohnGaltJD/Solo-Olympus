@@ -377,11 +377,24 @@ const DataManager = {
             // Set data version
             this.data.dataVersion = this.dataVersion;
             
-            // Store to localStorage for backwards compatibility
-            localStorage.setItem('olympusBank', JSON.stringify(this.data));
+            // Get the family ID for storage
+            const familyId = this.familyId || localStorage.getItem('olympusBankFamilyId') || 'default-family';
+            
+            // Create family-specific storage key
+            const familyStorageKey = `olympusBank_${familyId}`;
+            
+            // Store to localStorage with both keys
+            localStorage.setItem(familyStorageKey, JSON.stringify(this.data));
+            localStorage.setItem('olympusBank', JSON.stringify(this.data)); // For backward compatibility
             
             // Also store family ID
-            localStorage.setItem('olympusBankFamilyId', this.familyId);
+            localStorage.setItem('olympusBankFamilyId', familyId);
+            
+            // Trigger cross-browser sync if it exists
+            if (window.triggerCrossBrowserSync && typeof window.triggerCrossBrowserSync === 'function') {
+                console.log("Triggering cross-browser sync after save");
+                window.triggerCrossBrowserSync();
+            }
             
             // Store to Firebase if available
             const useFirebase = (window.firebase && window.db) || forceFirebase;
@@ -1655,36 +1668,75 @@ const DataManager = {
     loadFromLocalStorage() {
         try {
             console.log("Loading data from localStorage");
-            const storedData = localStorage.getItem('olympusBank');
+            
+            // Get the family ID for localized storage
+            const familyId = this.familyId || localStorage.getItem('olympusBankFamilyId') || 'default-family';
+            console.log("Looking for data for family ID:", familyId);
+            
+            // Check family-specific data first, then fall back to standard key
+            const familyStorageKey = `olympusBank_${familyId}`;
+            let storedData = localStorage.getItem(familyStorageKey);
+            
+            if (!storedData) {
+                console.log("No family-specific data found, checking standard key");
+                storedData = localStorage.getItem('olympusBank');
+                
+                // If found data in standard key, save it to the family-specific key
+                if (storedData) {
+                    console.log("Found data in standard key, copying to family-specific key");
+                    localStorage.setItem(familyStorageKey, storedData);
+                }
+            } else {
+                console.log("Found family-specific data");
+            }
             
             if (storedData) {
-                const parsedData = JSON.parse(storedData);
-                
-                // Validate data structure
-                if (this.validateDataStructure(parsedData)) {
-                    console.log("Valid data loaded from localStorage");
+                try {
+                    const parsedData = JSON.parse(storedData);
                     
-                    // Migrate data if needed
-                    const migratedData = this.migrateData(parsedData);
-                    
-                    // Only update if different from current data
-                    const currentDataStr = JSON.stringify(this.data);
-                    const newDataStr = JSON.stringify(migratedData);
-                    
-                    if (currentDataStr !== newDataStr) {
-                        console.log("Data has changed, updating");
-                        this.data = migratedData;
+                    // Validate data structure
+                    if (this.validateDataStructure(parsedData)) {
+                        console.log("Valid data loaded from localStorage");
                         
-                        // Update UI if needed
-                        if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
-                            console.log("Refreshing UI after loading from localStorage");
-                            UIManager.refreshAllData();
+                        // Migrate data if needed
+                        const migratedData = this.migrateData(parsedData);
+                        
+                        // Only update if different from current data
+                        const currentDataStr = JSON.stringify(this.data || {});
+                        const newDataStr = JSON.stringify(migratedData);
+                        
+                        if (currentDataStr !== newDataStr) {
+                            console.log("Data has changed, updating memory and UI");
+                            this.data = migratedData;
+                            
+                            // Update display directly for immediate feedback
+                            this._updateDisplayValues();
+                            
+                            // Update UI if needed
+                            if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                                console.log("Refreshing UI after loading from localStorage");
+                                UIManager.refreshAllData();
+                            }
+                            
+                            // Make sure data is saved back to localStorage to ensure consistency
+                            localStorage.setItem(familyStorageKey, JSON.stringify(this.data));
+                            localStorage.setItem('olympusBank', JSON.stringify(this.data));
+                            
+                            // Show toast message if available
+                            if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                UIManager.showToast("Data synchronized", "success");
+                            }
+                        } else {
+                            console.log("Data unchanged, no update needed");
                         }
+                        
+                        return true;
+                    } else {
+                        console.warn("Invalid data structure in localStorage");
+                        return false;
                     }
-                    
-                    return true;
-                } else {
-                    console.warn("Invalid data structure in localStorage");
+                } catch (parseError) {
+                    console.error("Error parsing data from localStorage:", parseError);
                     return false;
                 }
             } else {
@@ -1803,63 +1855,77 @@ const DataManager = {
             try {
                 console.log("In manualSync: Performing sync operation");
                 
-                // First, save our current in-memory data to localStorage
-                localStorage.setItem('olympusBank', JSON.stringify(this.data));
+                // Get the family ID for storage
+                const familyId = this.familyId || localStorage.getItem('olympusBankFamilyId') || 'default-family';
+                const familyStorageKey = `olympusBank_${familyId}`;
+                
+                // First, save our current in-memory data to localStorage using family-specific keys
+                localStorage.setItem(familyStorageKey, JSON.stringify(this.data));
+                localStorage.setItem('olympusBank', JSON.stringify(this.data)); // For backward compatibility
                 console.log("Current data saved to localStorage");
                 
-                // Try to sync with Firebase if connected
-                if (window.isFirebaseConnected && window.firebase && window.db) {
-                    console.log("Firebase connected, attempting cloud sync");
-                    
-                    // First push our data to Firebase
-                    this.saveData(true)
-                        .then(() => {
-                            console.log("Data pushed to Firebase");
+                // First try local sync which is more reliable
+                this._performLocalSync()
+                    .then(localSuccess => {
+                        // If we're connected to Firebase, try cloud sync as well
+                        if (window.isFirebaseConnected && window.firebase && window.db) {
+                            console.log("Local sync complete, now attempting cloud sync");
                             
-                            // Then fetch latest data from Firebase
-                            if (typeof this.forceSyncFromFirebase === 'function') {
-                                console.log("Fetching latest data from Firebase");
-                                return this.forceSyncFromFirebase();
-                            } else {
-                                console.log("forceSyncFromFirebase not available");
-                                return false;
+                            // Push data to Firebase first
+                            this.saveData(true)
+                                .then(() => {
+                                    // Then try to fetch the latest data from Firebase
+                                    if (typeof this.forceSyncFromFirebase === 'function') {
+                                        return this.forceSyncFromFirebase()
+                                            .then(cloudSuccess => {
+                                                if (cloudSuccess) {
+                                                    console.log("Cloud sync successful");
+                                                    
+                                                    // Ensure we have the latest data in localStorage
+                                                    localStorage.setItem(familyStorageKey, JSON.stringify(this.data));
+                                                    localStorage.setItem('olympusBank', JSON.stringify(this.data));
+                                                    
+                                                    // Signal other tabs to sync
+                                                    this._triggerSyncToOtherTabs();
+                                                    
+                                                    // Show success notification
+                                                    if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                                        UIManager.showToast("Data synchronized with cloud", "success");
+                                                    }
+                                                } else {
+                                                    console.log("Cloud sync failed, but local sync was successful");
+                                                    if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                                        UIManager.showToast("Local sync successful, but cloud sync failed", "warning");
+                                                    }
+                                                }
+                                                
+                                                resolve(true); // Local sync was successful anyway
+                                            });
+                                    } else {
+                                        console.log("forceSyncFromFirebase not available, but local sync was successful");
+                                        resolve(true);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error("Error during cloud sync:", error);
+                                    // Local sync was successful, so still resolve as success
+                                    if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                        UIManager.showToast("Local sync successful, but cloud sync failed", "warning");
+                                    }
+                                    resolve(true);
+                                });
+                        } else {
+                            console.log("Firebase not connected, but local sync was successful");
+                            if (window.UIManager && typeof UIManager.showToast === 'function') {
+                                UIManager.showToast("Local sync completed", "success");
                             }
-                        })
-                        .then(result => {
-                            if (result) {
-                                console.log("Cloud sync successful");
-                                
-                                // Ensure we have the latest data in localStorage
-                                localStorage.setItem('olympusBank', JSON.stringify(this.data));
-                                
-                                // Signal other tabs to sync
-                                this._triggerSyncToOtherTabs();
-                                
-                                // Show success notification
-                                if (window.UIManager && typeof UIManager.showToast === 'function') {
-                                    UIManager.showToast("Data synchronized with cloud", "success");
-                                }
-                                
-                                resolve(true);
-                            } else {
-                                console.log("Cloud sync failed, falling back to local sync");
-                                this._performLocalSync()
-                                    .then(() => resolve(true))
-                                    .catch(error => reject(error));
-                            }
-                        })
-                        .catch(error => {
-                            console.error("Error during cloud sync:", error);
-                            this._performLocalSync()
-                                .then(() => resolve(true))
-                                .catch(error => reject(error));
-                        });
-                } else {
-                    console.log("Firebase not connected, using local sync only");
-                    this._performLocalSync()
-                        .then(() => resolve(true))
-                        .catch(error => reject(error));
-                }
+                            resolve(true);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error during local sync:", error);
+                        reject(error);
+                    });
             } catch (error) {
                 console.error("Error in manual sync:", error);
                 // Show error toast if UI manager is available
