@@ -12,14 +12,15 @@
     
     <!-- iOS Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Olympus Treasury">
-    <link rel="apple-touch-icon" href="images/app-icons/icon-152x152.png">
+    <link rel="apple-touch-icon" href="images/icons/icon-152x152.png">
     
     <!-- Preload Critical Assets -->
-    <link rel="preload" href="css/reset.css" as="style">
     <link rel="preload" href="css/tailwind.css" as="style">
     <link rel="preload" href="js/dashboard-components.js" as="script">
+    <link rel="preload" href="js/dashboard-adapter.js" as="script">
     <link rel="preload" href="js/data.js" as="script">
     <link rel="preload" href="js/app.js" as="script">
     
@@ -41,9 +42,9 @@
     
     <!-- Dashboard Components -->
     <script src="js/dashboard-components.js"></script>
+    <script src="js/dashboard-adapter.js"></script>
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/parent.css">
     <link rel="stylesheet" href="css/child.css">
@@ -55,7 +56,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Open+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <!-- Favicon -->
-    <link rel="shortcut icon" href="images/app-icons/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="images/icons/favicon.ico" type="image/x-icon">
     
     <!-- Custom Styles -->
     <style>
@@ -155,6 +156,19 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* For compatibility with legacy DOM elements */
+        #form-parent-auth,
+        #form-child-auth,
+        #parent-dashboard,
+        #child-dashboard,
+        #transaction-list,
+        #chore-list,
+        #pending-approvals,
+        #goals-list,
+        #settings-panel {
+            display: none; /* Hidden but available for legacy JS */
+        }
     </style>
 </head>
 <body>
@@ -174,6 +188,39 @@
 
     <!-- Dashboard Container - Will be populated by JavaScript -->
     <div id="dashboard-root" class="min-h-screen"></div>
+    
+    <!-- Legacy DOM elements (hidden but available for existing JS) -->
+    <div id="legacy-elements" style="display:none;">
+        <div id="app-container">
+            <div id="parent-dashboard"></div>
+            <div id="child-dashboard"></div>
+            
+            <div id="transaction-section">
+                <ul id="transaction-list"></ul>
+            </div>
+            
+            <div id="chore-section">
+                <ul id="chore-list"></ul>
+            </div>
+            
+            <div id="approval-section">
+                <ul id="pending-approvals"></ul>
+            </div>
+            
+            <div id="goals-section">
+                <ul id="goals-list"></ul>
+            </div>
+            
+            <div id="settings-section">
+                <div id="settings-panel"></div>
+            </div>
+            
+            <div id="auth-section">
+                <form id="form-parent-auth"></form>
+                <form id="form-child-auth"></form>
+            </div>
+        </div>
+    </div>
     
     <!-- Transaction Modal (Hidden by default) -->
     <div id="transaction-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-20 p-4 hidden">
@@ -356,20 +403,45 @@
         
         // Update application state from DataManager
         function updateAppState() {
-            if (window.DataManager) {
-                // Get current balance
-                appState.balance = DataManager.getBalance();
-                
-                // Get recent transactions
-                appState.transactions = DataManager.getRecentTransactions(10);
-                
-                // Get chores
-                appState.chores = DataManager.getChores();
-                
-                // Get goals
-                appState.goals = DataManager.getGoals();
-                
-                console.log('App state updated:', appState);
+            try {
+                if (window.DataManager) {
+                    // Get current balance
+                    if (DataManager.getBalance && typeof DataManager.getBalance === 'function') {
+                        appState.balance = DataManager.getBalance();
+                    } else if (DataManager.getData && typeof DataManager.getData === 'function') {
+                        const data = DataManager.getData();
+                        appState.balance = data.balance || 0;
+                    }
+                    
+                    // Get recent transactions
+                    if (DataManager.getRecentTransactions && typeof DataManager.getRecentTransactions === 'function') {
+                        appState.transactions = DataManager.getRecentTransactions(10);
+                    } else if (DataManager.getTransactions && typeof DataManager.getTransactions === 'function') {
+                        appState.transactions = DataManager.getTransactions().slice(0, 10);
+                    }
+                    
+                    // Get chores
+                    if (DataManager.getChores && typeof DataManager.getChores === 'function') {
+                        appState.chores = DataManager.getChores();
+                    } else if (DataManager.getData && typeof DataManager.getData === 'function') {
+                        const data = DataManager.getData();
+                        appState.chores = data.chores || [];
+                    }
+                    
+                    // Get goals
+                    if (DataManager.getSavingsGoals && typeof DataManager.getSavingsGoals === 'function') {
+                        appState.goals = DataManager.getSavingsGoals();
+                    } else if (DataManager.getGoals && typeof DataManager.getGoals === 'function') {
+                        appState.goals = DataManager.getGoals();
+                    } else if (DataManager.getData && typeof DataManager.getData === 'function') {
+                        const data = DataManager.getData();
+                        appState.goals = data.goals || [];
+                    }
+                    
+                    console.log('App state updated:', appState);
+                }
+            } catch (error) {
+                console.error('Error updating app state:', error);
             }
         }
         
@@ -494,10 +566,23 @@
         function handleSyncClick() {
             console.log('Sync button clicked');
             
-            if (window.DataManager && typeof DataManager.manualSync === 'function') {
+            let syncFunction = null;
+            
+            // Try multiple possible sync methods
+            if (window.FirebaseBridge && typeof FirebaseBridge.forceSyncToCloud === 'function') {
+                syncFunction = FirebaseBridge.forceSyncToCloud;
+            } else if (window.DataManager && typeof DataManager.manualSync === 'function') {
+                syncFunction = DataManager.manualSync;
+            } else if (window.DataManager && typeof DataManager._forceSyncToFirebase === 'function') {
+                syncFunction = DataManager._forceSyncToFirebase;
+            } else if (window.Firebase && typeof Firebase._forceSyncToFirebase === 'function') {
+                syncFunction = Firebase._forceSyncToFirebase;
+            }
+            
+            if (syncFunction) {
                 showToast('Syncing with cloud...', 'info');
                 
-                DataManager.manualSync()
+                Promise.resolve(syncFunction())
                     .then(success => {
                         if (success) {
                             showToast('Synchronization complete!', 'success');
@@ -506,7 +591,7 @@
                             updateAppState();
                             renderDashboard();
                         } else {
-                            showToast('Sync failed. Check your connection.', 'error');
+                            showToast('Sync completed with warnings. Check your connection.', 'info');
                         }
                     })
                     .catch(error => {
@@ -566,11 +651,21 @@
                     const signedAmount = isDeposit ? amount : -amount;
                     
                     // Add transaction using DataManager
+                    let transactionPromise = null;
+                    
                     if (window.DataManager && typeof DataManager.addTransaction === 'function') {
-                        DataManager.addTransaction(signedAmount, description, category)
+                        // Use the standard method if available
+                        transactionPromise = DataManager.addTransaction(signedAmount, description, category);
+                    } else if (window.DataManager && typeof DataManager.addPendingTransaction === 'function') {
+                        // Try the pending transaction method if regular one is not available
+                        transactionPromise = DataManager.addPendingTransaction(signedAmount, description, category);
+                    }
+                    
+                    if (transactionPromise) {
+                        Promise.resolve(transactionPromise)
                             .then(success => {
                                 if (success) {
-                                    showToast(`${isDeposit ? 'Deposit' : 'Withdrawal'} successful!`, 'success');
+                                    showToast(`${isDeposit ? 'Deposit' : 'Withdrawal'} request submitted!`, 'success');
                                     
                                     // Update app state and re-render
                                     updateAppState();

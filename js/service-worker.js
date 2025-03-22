@@ -1,13 +1,12 @@
 // service-worker.js ---
-// Service worker for Family Mount Olympus Bank
+// Service worker for Mount Olympus Treasury
 // Focused on performance enhancements rather than offline functionality
 
-const CACHE_NAME = 'olympus-bank-v1';
+const CACHE_NAME = 'olympus-treasury-v2';
 
 // Assets to cache for performance
 const ASSETS_TO_CACHE = [
-  '/css/reset.css',
-  '/css/style.css',
+  '/css/tailwind.css',
   '/css/parent.css',
   '/css/child.css',
   '/css/animations.css',
@@ -17,11 +16,17 @@ const ASSETS_TO_CACHE = [
   '/js/transactions.js',
   '/js/chores.js',
   '/js/goals.js',
-  '/js/ui.js',
+  '/js/settings.js',
   '/js/utils.js',
-  '/images/app-icons/favicon.svg',
-  '/images/gods/zeus.svg',
-  '/images/gods/hermes.svg'
+  '/js/dashboard-components.js',
+  '/js/dashboard-adapter.js',
+  '/js/firebase-config.js',
+  '/js/firebase-auth.js',
+  '/js/browser-check.js',
+  '/js/perf-monitor.js',
+  '/js/a11y-enhancements.js',
+  '/index.html',
+  '/login.html'
 ];
 
 // Install event - cache critical assets for performance
@@ -31,7 +36,19 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('[Service Worker] Caching app assets for performance...');
-        return cache.addAll(ASSETS_TO_CACHE);
+        return cache.addAll(ASSETS_TO_CACHE.map(url => {
+          // If URLs start with /, remove the leading slash when running locally
+          // or if being served from GitHub Pages
+          if (url.startsWith('/')) {
+            // Check if we're on GitHub Pages
+            if (self.location.hostname.includes('github.io')) {
+              return url.replace('/', '/Solo-Olympus/');
+            }
+            // For local development, just remove the leading slash
+            return url.substring(1);
+          }
+          return url;
+        }));
       })
       .then(() => {
         console.log('[Service Worker] Successfully cached app assets');
@@ -77,7 +94,7 @@ self.addEventListener('fetch', event => {
   if (url.origin !== location.origin) return;
 
   // For static assets, use cache-first strategy for performance
-  if (event.request.url.match(/\.(css|js|svg|png|jpg|jpeg|gif)$/)) {
+  if (event.request.url.match(/\.(css|js|svg|png|jpg|jpeg|gif|ico)$/)) {
     event.respondWith(
       caches.match(event.request)
         .then(cachedResponse => {
@@ -104,14 +121,43 @@ self.addEventListener('fetch', event => {
                 });
 
               return response;
+            })
+            .catch(error => {
+              console.error('[Service Worker] Fetch error:', error, 'for URL:', event.request.url);
+              // Return a fallback response or let the browser handle the error
+              return new Response('Network error occurred', { status: 503, statusText: 'Service Unavailable' });
             });
         })
     );
     return;
   }
 
-  // For other requests (HTML pages, dynamic content), always go to network
-  // This ensures users always get fresh content
+  // For HTML files, network-first strategy to ensure up-to-date content
+  if (event.request.url.endsWith('.html') || event.request.url.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Clone the response
+          const responseToCache = response.clone();
+          
+          // Cache the HTML for offline fallback
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+            
+          return response;
+        })
+        .catch(() => {
+          // If network fails, try to serve from cache
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // For other requests, always go to network
+  // This ensures users always get fresh content for non-cached resources
   return;
 });
 
