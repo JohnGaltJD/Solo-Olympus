@@ -84,60 +84,6 @@
 
     <!-- Main Container -->
     <div class="container">
-        <!-- Login Section -->
-        <section id="login-section" class="active-section">
-            <div class="olympus-bank-header">
-                <h1>Mount Olympus Bank</h1>
-                <div class="olympus-pillars">
-                    <div class="pillar left-pillar"></div>
-                    <div class="divine-light"></div>
-                    <div class="pillar right-pillar"></div>
-                </div>
-            </div>
-            
-            <div class="login-container">
-                <h2>Choose Your Path</h2>
-                
-                <div class="family-code-container">
-                    <p>Enter your family code to access your account across devices:</p>
-                    <div class="family-code-input">
-                        <input type="text" id="family-code" placeholder="Family Code">
-                        <button id="set-family-code-btn">Set Family Code</button>
-                    </div>
-                    <p class="family-code-status" id="family-code-status"></p>
-                </div>
-                
-                <div class="login-options">
-                    <div class="login-option" id="parent-option">
-                        <div class="god-avatar zeus-avatar"></div>
-                        <h3>Zeus</h3>
-                        <p>Parent Access</p>
-                        <button class="login-btn" id="parent-login-btn">Enter as Zeus</button>
-                    </div>
-                    
-                    <div class="login-option" id="child-option">
-                        <div class="god-avatar hermes-avatar"></div>
-                        <h3>Hermes</h3>
-                        <p>Kaden's Access</p>
-                        <button class="login-btn" id="child-login-btn">Enter as Hermes</button>
-                    </div>
-                </div>
-                
-                <!-- Parent Password Modal (Hidden by default) -->
-                <div class="modal" id="parent-password-modal">
-                    <div class="modal-content">
-                        <h3>Zeus Authentication</h3>
-                        <p>Enter the divine password to access the parent controls:</p>
-                        <input type="password" id="parent-password" placeholder="Password">
-                        <div class="modal-buttons">
-                            <button id="cancel-password-btn">Cancel</button>
-                            <button id="submit-password-btn">Submit</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
         <!-- Parent Dashboard Section (Hidden by default) -->
         <section id="parent-dashboard" class="dashboard-section">
             <header class="dashboard-header">
@@ -596,19 +542,43 @@
             installPrompt.classList.add('hidden');
         });
         
-        // URL parameter handling for direct login
+        // URL parameter handling for login
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const roleParam = urlParams.get('role');
             
-            if (roleParam === 'parent') {
-                setTimeout(() => {
-                    document.getElementById('parent-login-btn').click();
-                }, 1000);
-            } else if (roleParam === 'child') {
-                setTimeout(() => {
-                    document.getElementById('child-login-btn').click();
-                }, 1000);
+            // If no role parameter is provided, redirect to login page
+            if (!roleParam || (roleParam !== 'parent' && roleParam !== 'child')) {
+                console.log('No valid role parameter found, redirecting to login page');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            console.log(`Role parameter found: ${roleParam}`);
+            
+            // Check if AuthManager is available
+            if (window.AuthManager) {
+                // Set the current user role
+                AuthManager.currentUser = roleParam;
+                
+                // Show the appropriate dashboard
+                if (roleParam === 'parent') {
+                    document.getElementById('parent-dashboard').classList.add('active-section');
+                    UIManager.showToast('Welcome, Zeus! Master of Mount Olympus.', 'success');
+                } else if (roleParam === 'child') {
+                    document.getElementById('child-dashboard').classList.add('active-section');
+                    UIManager.showToast('Welcome, Hermes! Guardian of Kaden\'s Treasury.', 'success');
+                }
+                
+                // Refresh UI components
+                if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
+                    setTimeout(() => {
+                        UIManager.refreshAllData();
+                    }, 100);
+                }
+            } else {
+                console.error('AuthManager not available, redirecting to login page');
+                window.location.href = 'login.html';
             }
         });
     </script>

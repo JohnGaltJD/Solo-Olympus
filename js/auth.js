@@ -279,20 +279,20 @@ const AuthManager = {
      * Logout the current user
      */
     logoutUser() {
-        // Hide all dashboards
+        console.log("Logging out current user...");
+        
+        // Clear user role
+        this.currentUser = null;
+        
+        // Remove auth state from localStorage
+        localStorage.removeItem('olympusBankAuthState');
+        
+        // Hide all dashboard sections
         document.getElementById('parent-dashboard').classList.remove('active-section');
         document.getElementById('child-dashboard').classList.remove('active-section');
         
-        // Show login section
-        document.getElementById('login-section').classList.add('active-section');
-        
-        // Reset current user
-        this.currentUser = null;
-        
-        // Clear auth state from localStorage
-        localStorage.removeItem('olympusBankAuthState');
-        
-        UIManager.showToast('You have returned to the gates of Olympus.', 'info');
+        // Redirect to login page
+        window.location.href = 'login.html';
     },
     
     /**
