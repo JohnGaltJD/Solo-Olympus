@@ -240,9 +240,15 @@ function setupLocalStorageSync() {
     
     // Create a function to trigger updates in other tabs
     window.triggerCrossBrowserSync = function() {
-        // Use a timestamp to trigger the storage event in other tabs
-        localStorage.setItem('olympusBankSync', Date.now().toString());
-        console.log("Cross-browser sync triggered");
+        // Include a data snapshot and timestamp
+        const syncData = {
+            timestamp: Date.now(),
+            lastSyncedData: localStorage.getItem('olympusBank')
+        };
+        
+        // Store the sync data to trigger storage event in other tabs
+        localStorage.setItem('olympusBankSync', JSON.stringify(syncData));
+        console.log("Cross-browser sync triggered with data snapshot");
     };
     
     // Listen for storage events from other tabs
@@ -251,28 +257,48 @@ function setupLocalStorageSync() {
         if (e.key === 'olympusBankSync') {
             console.log("Received sync signal from another tab");
             
-            // Reload data from localStorage
             try {
-                if (window.DataManager && typeof DataManager.loadFromLocalStorage === 'function') {
-                    DataManager.loadFromLocalStorage();
-                    console.log("Data reloaded from localStorage");
+                // Parse the sync data including the data snapshot
+                const syncData = JSON.parse(e.newValue);
+                
+                if (syncData && syncData.lastSyncedData) {
+                    console.log("Received data snapshot from another tab");
                     
-                    // Update UI if UIManager exists
-                    if (window.UIManager) {
-                        if (typeof UIManager.refreshAllData === 'function') {
-                            UIManager.refreshAllData();
-                        } else if (typeof UIManager.updateUI === 'function') {
-                            UIManager.updateUI();
+                    // Store the received data in localStorage
+                    localStorage.setItem('olympusBank', syncData.lastSyncedData);
+                    
+                    // Reload data from localStorage
+                    if (window.DataManager && typeof DataManager.loadFromLocalStorage === 'function') {
+                        DataManager.loadFromLocalStorage();
+                        console.log("Data reloaded from another tab's snapshot");
+                        
+                        // Update UI if UIManager exists
+                        if (window.UIManager) {
+                            if (typeof UIManager.refreshAllData === 'function') {
+                                UIManager.refreshAllData();
+                            } else if (typeof UIManager.updateUI === 'function') {
+                                UIManager.updateUI();
+                            }
+                        }
+                        
+                        // Show toast if available
+                        if (window.UIManager && typeof UIManager.showToast === 'function') {
+                            UIManager.showToast("Data synchronized from another window", "info");
                         }
                     }
-                    
-                    // Show toast if available
-                    if (window.UIManager && typeof UIManager.showToast === 'function') {
-                        UIManager.showToast("Data synchronized from another window", "info");
+                } else {
+                    console.warn("Received sync signal without data snapshot");
+                    // Fallback to the old method of just reloading from localStorage
+                    if (window.DataManager && typeof DataManager.loadFromLocalStorage === 'function') {
+                        DataManager.loadFromLocalStorage();
                     }
                 }
             } catch (error) {
-                console.error("Error syncing from another tab:", error);
+                console.error("Error processing sync data from another tab:", error);
+                // Attempt basic localStorage reload as fallback
+                if (window.DataManager && typeof DataManager.loadFromLocalStorage === 'function') {
+                    DataManager.loadFromLocalStorage();
+                }
             }
         }
     });
