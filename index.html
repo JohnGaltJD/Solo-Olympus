@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Family Mount Olympus Bank - A Greek mythology themed banking app for teaching children financial responsibility">
+    <meta name="description" content="Mount Olympus Treasury - A Greek mythology themed banking app for teaching children financial responsibility">
     <meta name="theme-color" content="#3949ab">
-    <title>Family Mount Olympus Bank</title>
+    <title>Dashboard - Mount Olympus Treasury</title>
     
     <!-- Web App Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -13,39 +13,21 @@
     <!-- iOS Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Olympus Bank">
+    <meta name="apple-mobile-web-app-title" content="Olympus Treasury">
     <link rel="apple-touch-icon" href="images/app-icons/icon-152x152.png">
     
     <!-- Preload Critical Assets -->
     <link rel="preload" href="css/reset.css" as="style">
-    <link rel="preload" href="css/style.css" as="style">
+    <link rel="preload" href="css/tailwind.css" as="style">
+    <link rel="preload" href="js/dashboard-components.js" as="script">
     <link rel="preload" href="js/data.js" as="script">
-    <link rel="preload" href="js/auth.js" as="script">
+    <link rel="preload" href="js/app.js" as="script">
     
     <!-- Firebase SDKs - Load early to ensure availability -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
-    <!-- Add console debugging script to help diagnose Firebase issues -->
-    <script>
-        // Debug helper
-        console.log('Firebase SDK Scripts loaded:');
-        window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                console.log('Firebase available:', typeof firebase !== 'undefined');
-                if (typeof firebase !== 'undefined') {
-                    console.log('Firebase modules check:', {
-                        app: typeof firebase.app !== 'undefined',
-                        firestore: typeof firebase.firestore !== 'undefined', 
-                        auth: typeof firebase.auth !== 'undefined',
-                        database: typeof firebase.database !== 'undefined'
-                    });
-                }
-            }, 1000);
-        });
-    </script>
     
     <!-- Firebase Configuration - Load before app scripts -->
     <script src="js/firebase-config.js"></script>
@@ -57,9 +39,14 @@
     <!-- Performance Monitoring - Load Early -->
     <script src="js/perf-monitor.js"></script>
     
+    <!-- Dashboard Components -->
+    <script src="js/dashboard-components.js"></script>
+    
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/reset.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/parent.css">
+    <link rel="stylesheet" href="css/child.css">
     <link rel="stylesheet" href="css/animations.css">
     
     <!-- Fonts -->
@@ -70,381 +57,195 @@
     <!-- Favicon -->
     <link rel="shortcut icon" href="images/app-icons/favicon.ico" type="image/x-icon">
     
-    <!-- Add Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f5f7fa;
+            color: #4a5568;
+        }
+        
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+                padding: 1.5rem;
+            }
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            min-width: 250px;
+            max-width: 350px;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast-success {
+            background-color: #10b981;
+        }
+        
+        .toast-error {
+            background-color: #ef4444;
+        }
+        
+        .toast-info {
+            background-color: #3b82f6;
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #3949ab;
+            animation: spin 1s infinite linear;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
     <!-- Application Loading Indicator -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-container">
-            <div class="olympus-loader"></div>
-            <p>Opening the Gates of Olympus...</p>
+    <div id="loading-screen" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+        <div class="text-center">
+            <div class="w-16 h-16 mx-auto mb-4 animate-divine-glow rounded-full bg-blue-900 flex items-center justify-center">
+                <div class="w-12 h-12 rounded-full bg-blue-800 flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center">
+                        <div class="w-4 h-4 rounded-full bg-yellow-400"></div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-blue-900 font-cinzel text-lg">Accessing the Treasury...</p>
         </div>
     </div>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Parent Dashboard Section (Hidden by default) -->
-        <section id="parent-dashboard" class="dashboard-section">
-            <header class="dashboard-header">
-                <h1>Zeus Dashboard: Overseeing Mount Olympus</h1>
-                <div class="dashboard-actions">
-                    <button id="force-cloud-sync-btn" class="action-btn">
-                        <i class="fa fa-cloud-download"></i> Force Cloud Sync
-                    </button>
-                </div>
-            </header>
-            
-            <div class="top-bar">
-                <div class="connection-status offline">
-                    <i class="fa fa-exclamation-triangle"></i> Offline
-                </div>
-                <div class="top-bar-actions">
-                    <button id="parent-sync-btn" class="sync-now-btn action-btn">
-                        <i class="fa fa-refresh"></i> Force Sync
-                    </button>
-                    <button id="parent-logout-btn" class="logout-btn">Logout</button>
-                </div>
-            </div>
-            
-            <div class="dashboard-content">
-                <div class="dashboard-sidebar">
-                    <nav class="dashboard-nav">
-                        <ul>
-                            <li><button data-tab="account-overview" class="tab-btn active">Account Overview</button></li>
-                            <li><button data-tab="chore-management" class="tab-btn">Chore Management</button></li>
-                            <li><button data-tab="approval-hub" class="tab-btn">Approval Hub</button></li>
-                            <li><button data-tab="savings-goals" class="tab-btn">Savings Goals</button></li>
-                            <li><button data-tab="settings" class="tab-btn">Settings</button></li>
-                        </ul>
-                    </nav>
-                </div>
-                
-                <div class="dashboard-main">
-                    <!-- Account Overview Tab -->
-                    <div class="dashboard-tab active" id="account-overview-tab">
-                        <h2>Kaden's Treasury</h2>
-                        <div class="account-balance">
-                            <h3>Current Balance</h3>
-                            <div class="balance-amount">$<span id="parent-balance-display">385.80</span></div>
-                        </div>
-                        
-                        <div class="recent-transactions">
-                            <h3>Recent Transactions</h3>
-                            <div class="transaction-list" id="parent-transaction-list">
-                                <!-- Transactions will be populated with JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Chore Management Tab -->
-                    <div class="dashboard-tab" id="chore-management-tab">
-                        <h2>Labors of Hermes</h2>
-                        <div class="chore-controls">
-                            <button id="add-chore-btn">Add New Labor</button>
-                        </div>
-                        
-                        <div class="chore-list-container">
-                            <h3>Assigned Labors</h3>
-                            <div id="parent-chore-list" class="chore-list">
-                                <!-- Chores will be populated with JavaScript -->
-                            </div>
-                            
-                            <h3>Completed Labors Awaiting Approval</h3>
-                            <div id="pending-chore-list" class="chore-list">
-                                <!-- Pending chores will be populated with JavaScript -->
-                            </div>
-                        </div>
-                        
-                        <!-- Add Chore Modal (Hidden by default) -->
-                        <div class="modal" id="add-chore-modal">
-                            <div class="modal-content">
-                                <h3>Assign New Labor</h3>
-                                <form id="add-chore-form">
-                                    <div class="form-group">
-                                        <label for="chore-name">Labor Name:</label>
-                                        <input type="text" id="chore-name" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="chore-value">Reward Value ($):</label>
-                                        <input type="number" id="chore-value" step="0.01" min="0.01" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="chore-frequency">Frequency:</label>
-                                        <select id="chore-frequency">
-                                            <option value="occurrence">Per Occurrence</option>
-                                            <option value="day">Daily</option>
-                                            <option value="week">Weekly</option>
-                                        </select>
-                                    </div>
-                                    <div class="modal-buttons">
-                                        <button type="button" id="cancel-add-chore-btn">Cancel</button>
-                                        <button type="submit">Add Labor</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Approval Hub Tab -->
-                    <div class="dashboard-tab" id="approval-hub-tab">
-                        <h2>Divine Approvals</h2>
-                        <div class="approval-container">
-                            <h3>All Requests Awaiting Zeus's Approval</h3>
-                            <div id="unified-approvals-list" class="approval-list">
-                                <!-- Unified approvals will be populated with JavaScript -->
-                            </div>
-                        </div>
-                        
-                        <!-- Keep the old sections for backward compatibility but hide them with CSS -->
-                        <div class="approval-legacy-container" style="display: none;">
-                            <div class="pending-transactions">
-                                <h3>Transaction Requests</h3>
-                                <div id="pending-transaction-list" class="transaction-list">
-                                    <!-- Pending transactions will be populated with JavaScript -->
-                                </div>
-                            </div>
-                            <div class="pending-chores">
-                                <h3>Labor Completions</h3>
-                                <div id="pending-chore-list" class="chore-list">
-                                    <!-- Pending chores will be populated with JavaScript -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Savings Goals Tab -->
-                    <div class="dashboard-tab" id="savings-goals-tab">
-                        <h2>Quests of Olympus</h2>
-                        <div class="goals-container" id="parent-goals-container">
-                            <!-- Goals will be populated with JavaScript -->
-                        </div>
-                    </div>
-                    
-                    <!-- Settings Tab -->
-                    <div class="dashboard-tab" id="settings-tab">
-                        <h2>Divine Settings</h2>
-                        <div class="settings-container">
-                            <div class="settings-group">
-                                <h3>Zeus Authentication</h3>
-                                <form id="change-password-form">
-                                    <div class="form-group">
-                                        <label for="current-password">Current Password:</label>
-                                        <input type="password" id="current-password" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="new-password">New Password:</label>
-                                        <input type="password" id="new-password" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="confirm-password">Confirm New Password:</label>
-                                        <input type="password" id="confirm-password" required>
-                                    </div>
-                                    <button type="submit">Update Password</button>
-                                </form>
-                            </div>
-                            
-                            <div class="settings-group">
-                                <h3>Account Management</h3>
-                                <form id="reset-account-form">
-                                    <div class="form-group">
-                                        <label for="reset-balance">Update Account Balance:</label>
-                                        <input type="number" id="reset-balance" step="0.01" min="0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Cloud Synchronization:</label>
-                                        <button type="button" id="force-sync-btn" class="action-btn">Force Cloud Sync</button>
-                                        <small>Use this if devices are showing different data. This will sync all devices to the cloud data.</small>
-                                    </div>
-                                    <div class="danger-zone">
-                                        <h4>Danger Zone</h4>
-                                        <button type="button" id="clear-transactions-btn" class="danger-btn">Clear All Transactions</button>
-                                        <button type="button" id="reset-all-btn" class="danger-btn">Reset Entire Application</button>
-                                    </div>
-                                    <button type="submit">Update Balance</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Child Dashboard Section (Hidden by default) -->
-        <section id="child-dashboard" class="dashboard-section">
-            <header class="dashboard-header">
-                <h1>Hermes Dashboard: Treasury of Olympus</h1>
-                <div class="header-controls">
-                    <div id="child-firebase-status" style="display: none;">Checking connection...</div>
-                    <div class="top-bar">
-                        <div class="connection-status offline">
-                            <i class="fa fa-exclamation-triangle"></i> Offline
-                        </div>
-                        <div class="top-bar-actions">
-                            <button id="child-sync-btn" class="sync-now-btn action-btn">
-                                <i class="fa fa-refresh"></i> Force Sync
-                            </button>
-                            <button id="child-logout-btn" class="logout-btn">Logout</button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-            
-            <div class="dashboard-content">
-                <div class="dashboard-sidebar">
-                    <nav class="dashboard-nav">
-                        <ul>
-                            <li><button data-tab="child-account" class="tab-btn active">My Treasury</button></li>
-                            <li><button data-tab="child-chores" class="tab-btn">My Labors</button></li>
-                            <li><button data-tab="child-transactions" class="tab-btn">Transactions</button></li>
-                            <li><button data-tab="child-goals" class="tab-btn">My Quests</button></li>
-                        </ul>
-                    </nav>
-                </div>
-                
-                <div class="dashboard-main">
-                    <!-- Child Account Tab -->
-                    <div class="dashboard-tab active" id="child-account-tab">
-                        <div class="olympus-greeting">
-                            <h2>Welcome, Kaden of Olympus!</h2>
-                            <div class="divine-balance">
-                                <h3>Your Divine Treasury</h3>
-                                <div class="balance-amount">$<span id="child-balance-display">385.80</span></div>
-                            </div>
-                        </div>
-                        
-                        <div class="quick-actions">
-                            <button id="request-deposit-btn" class="action-btn deposit-btn">Request Deposit</button>
-                            <button id="request-withdrawal-btn" class="action-btn withdraw-btn">Request Withdrawal</button>
-                        </div>
-                        
-                        <div class="recent-activities">
-                            <h3>Recent Divine Activities</h3>
-                            <div class="transaction-list" id="child-recent-transactions">
-                                <!-- Recent transactions will be populated with JavaScript -->
-                            </div>
-                        </div>
-                        
-                        <!-- Transaction Request Modal (Hidden by default) -->
-                        <div class="modal" id="transaction-request-modal">
-                            <div class="modal-content">
-                                <h3 id="transaction-modal-title">Request from Zeus</h3>
-                                <form id="transaction-request-form">
-                                    <div class="form-group">
-                                        <label for="transaction-amount">Amount ($):</label>
-                                        <input type="number" id="transaction-amount" step="0.01" min="0.01" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="transaction-reason">Reason:</label>
-                                        <textarea id="transaction-reason" required></textarea>
-                                    </div>
-                                    <input type="hidden" id="transaction-type" value="deposit">
-                                    <div class="modal-buttons">
-                                        <button type="button" id="cancel-transaction-btn">Cancel</button>
-                                        <button type="submit">Submit Request</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Child Chores Tab -->
-                    <div class="dashboard-tab" id="child-chores-tab">
-                        <h2>Labors of Hermes</h2>
-                        <div class="chore-container">
-                            <div class="assigned-chores">
-                                <h3>Assigned Labors</h3>
-                                <div class="chore-list" id="child-chore-list">
-                                    <!-- Assigned chores will be populated with JavaScript -->
-                                </div>
-                            </div>
-                            
-                            <div class="pending-chores">
-                                <h3>Awaiting Zeus's Approval</h3>
-                                <div class="chore-list" id="child-pending-chores">
-                                    <!-- Pending chores will be populated with JavaScript -->
-                                </div>
-                            </div>
-                            
-                            <div class="completed-chores">
-                                <h3>Completed Labors</h3>
-                                <div class="chore-list" id="child-completed-chores">
-                                    <!-- Completed chores will be populated with JavaScript -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Child Transactions Tab -->
-                    <div class="dashboard-tab" id="child-transactions-tab">
-                        <h2>Treasury Transactions</h2>
-                        <div class="transaction-history">
-                            <div class="transaction-filters">
-                                <button class="filter-btn active" data-filter="all">All</button>
-                                <button class="filter-btn" data-filter="deposits">Deposits</button>
-                                <button class="filter-btn" data-filter="withdrawals">Withdrawals</button>
-                                <button class="filter-btn" data-filter="chores">Labor Rewards</button>
-                            </div>
-                            <div class="transaction-list" id="child-transaction-history">
-                                <!-- Transaction history will be populated with JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Child Goals Tab -->
-                    <div class="dashboard-tab" id="child-goals-tab">
-                        <h2>Heroic Quests</h2>
-                        <div class="goals-header">
-                            <h3>Your Divine Quests</h3>
-                            <button id="add-goal-btn">Begin New Quest</button>
-                        </div>
-                        
-                        <div class="goals-container" id="child-goals-container">
-                            <!-- Goals will be populated with JavaScript -->
-                        </div>
-                        
-                        <!-- Add Goal Modal (Hidden by default) -->
-                        <div class="modal" id="add-goal-modal">
-                            <div class="modal-content">
-                                <h3>Begin a New Quest</h3>
-                                <form id="add-goal-form">
-                                    <div class="form-group">
-                                        <label for="goal-name">Quest Name:</label>
-                                        <input type="text" id="goal-name" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="goal-amount">Target Amount ($):</label>
-                                        <input type="number" id="goal-amount" step="0.01" min="0.01" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="goal-icon">Choose an Icon:</label>
-                                        <div class="goal-icons-container" id="goal-icons-selection">
-                                            <!-- Goal icons will be populated with JavaScript -->
-                                        </div>
-                                    </div>
-                                    <input type="hidden" id="selected-goal-icon" value="default">
-                                    <div class="modal-buttons">
-                                        <button type="button" id="cancel-add-goal-btn">Cancel</button>
-                                        <button type="submit">Begin Quest</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
+    <!-- Dashboard Container - Will be populated by JavaScript -->
+    <div id="dashboard-root" class="min-h-screen"></div>
     
-    <!-- App Install Prompt (Hidden by default) -->
-    <div id="install-prompt" class="install-prompt hidden">
-        <div class="install-prompt-content">
-            <h3>Install Mount Olympus Bank</h3>
-            <p>Add this app to your home screen for quick access to Kaden's divine treasury!</p>
-            <div class="install-buttons">
-                <button id="install-later" class="secondary-btn">Later</button>
-                <button id="install-now" class="primary-btn">Install Now</button>
-            </div>
+    <!-- Transaction Modal (Hidden by default) -->
+    <div id="transaction-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-20 p-4 hidden">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 animate-scale-in">
+            <h2 id="transaction-modal-title" class="text-xl font-bold text-blue-900 mb-4 font-cinzel">New Transaction</h2>
+            
+            <form id="transaction-form" class="space-y-4">
+                <div>
+                    <label for="transaction-amount" class="block text-sm font-medium text-blue-900 mb-2">
+                        Amount
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500">$</span>
+                        </div>
+                        <input
+                            id="transaction-amount"
+                            type="number"
+                            step="0.01"
+                            min="0.01" 
+                            placeholder="0.00"
+                            class="block w-full pl-7 pr-12 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            required
+                        />
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="transaction-description" class="block text-sm font-medium text-blue-900 mb-2">
+                        Description
+                    </label>
+                    <input
+                        id="transaction-description"
+                        type="text"
+                        placeholder="What's this transaction for?"
+                        class="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        required
+                    />
+                </div>
+                
+                <div id="transaction-category-container" class="hidden">
+                    <label for="transaction-category" class="block text-sm font-medium text-blue-900 mb-2">
+                        Category
+                    </label>
+                    <select
+                        id="transaction-category"
+                        class="block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="allowance">Allowance</option>
+                        <option value="gift">Gift from the Gods</option>
+                        <option value="chore">Labor Reward</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="flex gap-4 pt-2">
+                    <button
+                        type="button"
+                        id="cancel-transaction-btn"
+                        class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        id="submit-transaction-btn"
+                        class="flex-1 px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 transition-colors"
+                    >
+                        Submit
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
     
@@ -454,133 +255,414 @@
     <!-- Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/data.js"></script>
-    <script src="js/auth.js"></script>
     <script src="js/transactions.js"></script>
     <script src="js/chores.js"></script>
     <script src="js/goals.js"></script>
     <script src="js/settings.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/browser-check.js"></script>
-    <script src="js/perf-monitor.js"></script>
     <script src="js/a11y-enhancements.js"></script>
     
-    <!-- Development mode scripts -->
+    <!-- Service Worker Registration -->
     <script>
-        // Load testing utilities only in development environment
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            const testScript = document.createElement('script');
-            testScript.src = 'js/test-error-handling.js';
-            document.body.appendChild(testScript);
-            console.log('Development mode: Test utilities loaded');
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('js/service-worker.js').catch(function(error) {
+                    console.error('Service Worker registration failed:', error);
+                });
+            });
         }
     </script>
     
-    <!-- Service Worker Registration -->
-    <script src="js/service-worker-registration.js"></script>
-    
-    <!-- Load application scripts in correct order -->
+    <!-- Dashboard Initialization Script -->
     <script>
-        // Loading screen handling
-        window.addEventListener('load', () => {
-            const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-                setTimeout(() => {
-                    loadingScreen.classList.add('fade-out');
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                    }, 500);
-                }, 800);
-            }
-        });
-    
-        // Service worker registration for performance enhancement
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/js/service-worker.js')
-                    .then((registration) => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.log('ServiceWorker registration failed: ', error);
-                    });
-            });
-        }
+        // Global state
+        const appState = {
+            currentUser: null, // 'parent' or 'child'
+            activeTab: 'overview',
+            balance: 0,
+            transactions: [],
+            chores: [],
+            goals: []
+        };
         
-        // Install prompt handling
-        let deferredPrompt;
-        const installPrompt = document.getElementById('install-prompt');
-        const installNow = document.getElementById('install-now');
-        const installLater = document.getElementById('install-later');
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later
-            deferredPrompt = e;
-            // Show the install prompt
-            installPrompt.classList.remove('hidden');
-        });
-        
-        installNow.addEventListener('click', () => {
-            // Hide the app install prompt
-            installPrompt.classList.add('hidden');
-            // Show the browser install prompt
-            deferredPrompt.prompt();
-            // Wait for the user to respond to the prompt
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                } else {
-                    console.log('User dismissed the install prompt');
-                }
-                deferredPrompt = null;
-            });
-        });
-        
-        installLater.addEventListener('click', () => {
-            // Hide the app install prompt
-            installPrompt.classList.add('hidden');
-        });
-        
-        // URL parameter handling for login
-        window.addEventListener('DOMContentLoaded', () => {
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard DOM loaded');
+            
+            // Check auth state from URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const roleParam = urlParams.get('role');
             
-            // If no role parameter is provided, redirect to login page
-            if (!roleParam || (roleParam !== 'parent' && roleParam !== 'child')) {
-                console.log('No valid role parameter found, redirecting to login page');
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            console.log(`Role parameter found: ${roleParam}`);
-            
-            // Check if AuthManager is available
-            if (window.AuthManager) {
-                // Set the current user role
-                AuthManager.currentUser = roleParam;
+            if (roleParam === 'parent' || roleParam === 'child') {
+                // Set current user from URL parameter
+                appState.currentUser = roleParam;
                 
-                // Show the appropriate dashboard
-                if (roleParam === 'parent') {
-                    document.getElementById('parent-dashboard').classList.add('active-section');
-                    UIManager.showToast('Welcome, Zeus! Master of Mount Olympus.', 'success');
-                } else if (roleParam === 'child') {
-                    document.getElementById('child-dashboard').classList.add('active-section');
-                    UIManager.showToast('Welcome, Hermes! Guardian of Kaden\'s Treasury.', 'success');
-                }
-                
-                // Refresh UI components
-                if (window.UIManager && typeof UIManager.refreshAllData === 'function') {
-                    setTimeout(() => {
-                        UIManager.refreshAllData();
-                    }, 100);
-                }
+                // Initialize app with the role
+                initializeDashboard(roleParam);
             } else {
-                console.error('AuthManager not available, redirecting to login page');
-                window.location.href = 'login.html';
+                // Check localStorage for auth state
+                const savedAuthState = localStorage.getItem('olympusBankAuthState');
+                if (savedAuthState) {
+                    try {
+                        const authState = JSON.parse(savedAuthState);
+                        if (authState && authState.currentUser) {
+                            appState.currentUser = authState.currentUser;
+                            
+                            // Initialize app with the saved role
+                            initializeDashboard(authState.currentUser);
+                        } else {
+                            // No valid auth state, redirect to login
+                            redirectToLogin();
+                        }
+                    } catch (error) {
+                        console.error('Error parsing saved auth state:', error);
+                        redirectToLogin();
+                    }
+                } else {
+                    // No auth state, redirect to login
+                    redirectToLogin();
+                }
             }
+            
+            // Setup transaction modal handlers
+            setupTransactionModal();
+            
+            // Hide loading screen
+            setTimeout(hideLoadingScreen, 800);
         });
+        
+        // Initialize the dashboard UI based on user role
+        function initializeDashboard(userRole) {
+            console.log(`Initializing dashboard for ${userRole}`);
+            
+            // Initialize necessary managers
+            if (window.DataManager && typeof DataManager.init === 'function') {
+                DataManager.init().then(() => {
+                    // Update state with data
+                    updateAppState();
+                    
+                    // Render the dashboard UI
+                    renderDashboard();
+                }).catch(error => {
+                    console.error('Error initializing DataManager:', error);
+                    showToast('Error loading your data. Please try again.', 'error');
+                });
+            } else {
+                console.error('DataManager not available');
+                showToast('Error: Required components not loaded', 'error');
+            }
+        }
+        
+        // Update application state from DataManager
+        function updateAppState() {
+            if (window.DataManager) {
+                // Get current balance
+                appState.balance = DataManager.getBalance();
+                
+                // Get recent transactions
+                appState.transactions = DataManager.getRecentTransactions(10);
+                
+                // Get chores
+                appState.chores = DataManager.getChores();
+                
+                // Get goals
+                appState.goals = DataManager.getGoals();
+                
+                console.log('App state updated:', appState);
+            }
+        }
+        
+        // Render the dashboard UI
+        function renderDashboard() {
+            const dashboardRoot = document.getElementById('dashboard-root');
+            if (!dashboardRoot) return;
+            
+            // Clear existing content
+            dashboardRoot.innerHTML = '';
+            
+            // Create dashboard header
+            const header = window.DashboardComponents.createDashboardHeader({
+                title: appState.currentUser === 'parent' ? 'Zeus Dashboard' : 'Hermes Dashboard',
+                subtitle: appState.currentUser === 'parent' ? 'Manage your family treasury' : 'Track your finances',
+                showSync: true,
+                onSyncClick: handleSyncClick
+            });
+            
+            // Create navigation
+            const navigation = window.DashboardComponents.createDashboardNavigation({
+                activeTab: appState.activeTab,
+                role: appState.currentUser,
+                onTabChange: handleTabChange
+            });
+            
+            // Create content container
+            const content = document.createElement('main');
+            content.className = 'container mx-auto';
+            
+            // Render active tab content
+            content.appendChild(renderTabContent(appState.activeTab));
+            
+            // Assemble dashboard
+            dashboardRoot.appendChild(header);
+            dashboardRoot.appendChild(navigation);
+            dashboardRoot.appendChild(content);
+        }
+        
+        // Render content based on active tab
+        function renderTabContent(tabId) {
+            const container = document.createElement('div');
+            
+            switch (tabId) {
+                case 'overview':
+                    container.className = 'dashboard-grid';
+                    
+                    // Account overview card
+                    const accountOverview = window.DashboardComponents.createAccountOverview({
+                        balance: appState.balance,
+                        currency: '$',
+                        onTransactionClick: handleTransactionClick
+                    });
+                    
+                    // Recent transactions card
+                    const transactionHistory = window.DashboardComponents.createTransactionHistory({
+                        transactions: appState.transactions,
+                        limit: 5
+                    });
+                    
+                    container.appendChild(accountOverview);
+                    container.appendChild(transactionHistory);
+                    break;
+                
+                case 'chores':
+                    // For now, just add a placeholder card
+                    const choresCard = window.DashboardComponents.createDashboardCard({
+                        title: 'Chores',
+                        content: '<p class="text-center py-4">Chore management will be implemented here.</p>'
+                    });
+                    container.appendChild(choresCard);
+                    break;
+                
+                case 'approvals':
+                    // For now, just add a placeholder card
+                    const approvalsCard = window.DashboardComponents.createDashboardCard({
+                        title: 'Approvals',
+                        content: '<p class="text-center py-4">Approvals will be implemented here.</p>'
+                    });
+                    container.appendChild(approvalsCard);
+                    break;
+                
+                case 'goals':
+                    // For now, just add a placeholder card
+                    const goalsCard = window.DashboardComponents.createDashboardCard({
+                        title: 'Savings Goals',
+                        content: '<p class="text-center py-4">Savings goals will be implemented here.</p>'
+                    });
+                    container.appendChild(goalsCard);
+                    break;
+                
+                case 'settings':
+                    // For now, just add a placeholder card
+                    const settingsCard = window.DashboardComponents.createDashboardCard({
+                        title: 'Settings',
+                        content: '<p class="text-center py-4">Settings will be implemented here.</p>'
+                    });
+                    container.appendChild(settingsCard);
+                    break;
+                
+                default:
+                    container.innerHTML = '<p class="text-center py-8">Tab content not implemented.</p>';
+            }
+            
+            return container;
+        }
+        
+        // Handle tab change
+        function handleTabChange(tabId) {
+            console.log(`Tab changed to: ${tabId}`);
+            appState.activeTab = tabId;
+            
+            // Re-render the content portion of the dashboard
+            const content = document.querySelector('main');
+            if (content) {
+                content.innerHTML = '';
+                content.appendChild(renderTabContent(tabId));
+            }
+        }
+        
+        // Handle sync button click
+        function handleSyncClick() {
+            console.log('Sync button clicked');
+            
+            if (window.DataManager && typeof DataManager.manualSync === 'function') {
+                showToast('Syncing with cloud...', 'info');
+                
+                DataManager.manualSync()
+                    .then(success => {
+                        if (success) {
+                            showToast('Synchronization complete!', 'success');
+                            
+                            // Update app state and re-render
+                            updateAppState();
+                            renderDashboard();
+                        } else {
+                            showToast('Sync failed. Check your connection.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Sync error:', error);
+                        showToast('Sync error: ' + (error.message || 'Unknown error'), 'error');
+                    });
+            } else {
+                showToast('Sync functionality not available', 'error');
+            }
+        }
+        
+        // Setup transaction modal handlers
+        function setupTransactionModal() {
+            const modal = document.getElementById('transaction-modal');
+            const form = document.getElementById('transaction-form');
+            const cancelBtn = document.getElementById('cancel-transaction-btn');
+            const submitBtn = document.getElementById('submit-transaction-btn');
+            
+            // Modal close functionality
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    if (modal) modal.classList.add('hidden');
+                });
+            }
+            
+            // Form submission handler
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const amountInput = document.getElementById('transaction-amount');
+                    const descriptionInput = document.getElementById('transaction-description');
+                    const categoryInput = document.getElementById('transaction-category');
+                    
+                    if (!amountInput || !descriptionInput) return;
+                    
+                    const amount = parseFloat(amountInput.value);
+                    const description = descriptionInput.value.trim();
+                    const category = categoryInput ? categoryInput.value : 'other';
+                    
+                    // Validate inputs
+                    if (isNaN(amount) || amount <= 0) {
+                        showToast('Please enter a valid amount', 'error');
+                        return;
+                    }
+                    
+                    if (!description) {
+                        showToast('Please enter a description', 'error');
+                        return;
+                    }
+                    
+                    // Get transaction type from modal title
+                    const modalTitle = document.getElementById('transaction-modal-title');
+                    const isDeposit = modalTitle && modalTitle.textContent.toLowerCase().includes('deposit');
+                    
+                    // Create transaction with the appropriate sign
+                    const signedAmount = isDeposit ? amount : -amount;
+                    
+                    // Add transaction using DataManager
+                    if (window.DataManager && typeof DataManager.addTransaction === 'function') {
+                        DataManager.addTransaction(signedAmount, description, category)
+                            .then(success => {
+                                if (success) {
+                                    showToast(`${isDeposit ? 'Deposit' : 'Withdrawal'} successful!`, 'success');
+                                    
+                                    // Update app state and re-render
+                                    updateAppState();
+                                    renderDashboard();
+                                    
+                                    // Close modal and reset form
+                                    if (modal) modal.classList.add('hidden');
+                                    if (form) form.reset();
+                                } else {
+                                    showToast('Transaction failed', 'error');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Transaction error:', error);
+                                showToast('Transaction error: ' + (error.message || 'Unknown error'), 'error');
+                            });
+                    } else {
+                        showToast('Transaction functionality not available', 'error');
+                    }
+                });
+            }
+        }
+        
+        // Handle transaction button click
+        function handleTransactionClick(type) {
+            console.log(`Transaction type: ${type}`);
+            
+            const modal = document.getElementById('transaction-modal');
+            const title = document.getElementById('transaction-modal-title');
+            const categoryContainer = document.getElementById('transaction-category-container');
+            
+            if (!modal || !title) return;
+            
+            // Set modal title based on transaction type
+            title.textContent = type === 'deposit' ? 'New Deposit' : 'New Withdrawal';
+            
+            // Show/hide category selection for deposits only
+            if (categoryContainer) {
+                categoryContainer.classList.toggle('hidden', type !== 'deposit');
+            }
+            
+            // Reset form
+            const form = document.getElementById('transaction-form');
+            if (form) form.reset();
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            
+            // Focus on amount input
+            const amountInput = document.getElementById('transaction-amount');
+            if (amountInput) {
+                setTimeout(() => amountInput.focus(), 100);
+            }
+        }
+        
+        // Redirect to login page
+        function redirectToLogin() {
+            window.location.href = 'login.html';
+        }
+        
+        // Hide loading screen
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('opacity-0');
+                loadingScreen.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }
+        }
+        
+        // Simple toast notification function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            
+            const container = document.getElementById('toast-container') || document.body;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
     </script>
 </body>
 </html> 
