@@ -1740,7 +1740,8 @@ const DataManager = {
                     }
                 } catch (parseError) {
                     console.error("Error parsing data from localStorage:", parseError);
-                    return false;
+                    // Ensure localStorage has our current data
+                    localStorage.setItem('olympusBank', JSON.stringify(this.data));
                 }
             } else {
                 console.warn("No data found in localStorage");
@@ -2151,10 +2152,11 @@ const DataManager = {
     },
 };
 
+// Expose DataManager globally at the beginning to ensure it's available for other scripts
+window.DataManager = DataManager;
+
 // Initialize DataManager when the document is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DataManager: DOM content loaded, initializing");
     DataManager.init();
-});
-
-// At the end of the file, add this line
-window.DataManager = DataManager; 
+}); 

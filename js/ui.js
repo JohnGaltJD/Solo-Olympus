@@ -298,6 +298,144 @@ const UIEffects = {
                 confetti.remove();
             }, 5000);
         }
+    },
+
+    /**
+     * Render all pending approvals (both transactions and chores) in unified view
+     */
+    renderUnifiedApprovals() {
+        console.log("UIManager: Rendering unified approvals");
+        
+        try {
+            const approvalsList = document.getElementById('approvals-list');
+            if (!approvalsList) {
+                console.warn("UIManager: Approvals list element not found");
+                return;
+            }
+            
+            // Clear existing approvals
+            approvalsList.innerHTML = '';
+            
+            // Get all pending approvals from DataManager
+            if (!window.DataManager) {
+                console.error("UIManager: DataManager not found when rendering approvals");
+                approvalsList.innerHTML = '<div class="empty-list">Error: Data manager not available</div>';
+                return;
+            }
+            
+            if (typeof DataManager.getAllPendingApprovals !== 'function') {
+                console.error("UIManager: DataManager.getAllPendingApprovals method not found");
+                approvalsList.innerHTML = '<div class="empty-list">Error: Cannot retrieve approvals</div>';
+                return;
+            }
+            
+            console.log("UIManager: Calling DataManager.getAllPendingApprovals");
+            const pendingApprovals = DataManager.getAllPendingApprovals();
+            console.log("UIManager: Pending approvals:", pendingApprovals);
+            
+            if (!pendingApprovals || pendingApprovals.length === 0) {
+                approvalsList.innerHTML = '<div class="empty-list">No approvals pending from the mortals</div>';
+                return;
+            }
+            
+            // Create approval items
+            pendingApprovals.forEach(approval => {
+                const approvalEl = document.createElement('div');
+                approvalEl.classList.add('approval-item');
+                
+                let approvalHtml = '';
+                let approvalActions = '';
+                
+                try {
+                    // Format date
+                    const date = new Date(approval.date);
+                    const formattedDate = `${date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}`;
+                    
+                    if (approval.approvalType === 'transaction') {
+                        // Transaction approval
+                        approvalHtml = `
+                            <div class="approval-details">
+                                <div class="approval-title">${approval.description || 'Unnamed transaction'}</div>
+                                <div class="approval-subtitle">
+                                    ${approval.type === 'withdrawal' ? 'Withdrawal' : 'Deposit'} request: $${Math.abs(approval.amount).toFixed(2)}
+                                </div>
+                                <div class="approval-date">${formattedDate}</div>
+                            </div>
+                        `;
+                        
+                        approvalActions = `
+                            <div class="approval-actions">
+                                <button class="approve-btn" data-transaction-id="${approval.id}" 
+                                    onclick="UIManager.approveTransaction('${approval.id}')">
+                                    Approve
+                                </button>
+                                <button class="reject-btn" data-transaction-id="${approval.id}"
+                                    onclick="UIManager.rejectTransaction('${approval.id}')">
+                                    Reject
+                                </button>
+                            </div>
+                        `;
+                    } else if (approval.approvalType === 'chore') {
+                        // Chore approval
+                        const eventText = approval.eventCount > 1 ? ` (x${approval.eventCount})` : '';
+                        const valueText = approval.eventCount > 1 
+                            ? `$${approval.value.toFixed(2)} × ${approval.eventCount} = $${(approval.value * approval.eventCount).toFixed(2)}`
+                            : `$${approval.value.toFixed(2)}`;
+                            
+                        approvalHtml = `
+                            <div class="approval-details">
+                                <div class="approval-title">${approval.name}${eventText}</div>
+                                <div class="approval-subtitle">
+                                    Completed labor: ${valueText}
+                                </div>
+                                <div class="approval-date">${formattedDate}</div>
+                            </div>
+                        `;
+                        
+                        approvalActions = `
+                            <div class="approval-actions">
+                                <button class="approve-btn" data-chore-id="${approval.id}"
+                                    onclick="ChoreManager.approveChore('${approval.id}')">
+                                    Approve
+                                </button>
+                                <button class="reject-btn" data-chore-id="${approval.id}"
+                                    onclick="ChoreManager.rejectChore('${approval.id}')">
+                                    Reject
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                    approvalEl.innerHTML = `${approvalHtml}${approvalActions}`;
+                    approvalsList.appendChild(approvalEl);
+                } catch (itemError) {
+                    console.error("UIManager: Error rendering approval item:", itemError, approval);
+                    
+                    // Add a simplified error item instead of skipping it completely
+                    approvalEl.innerHTML = `
+                        <div class="approval-details">
+                            <div class="approval-title">Error displaying ${approval.approvalType || 'approval'}</div>
+                            <div class="approval-subtitle">ID: ${approval.id || 'unknown'}</div>
+                        </div>
+                    `;
+                    approvalsList.appendChild(approvalEl);
+                }
+            });
+            
+            console.log("UIManager: Unified approvals rendered successfully");
+        } catch (error) {
+            console.error("UIManager: Error rendering unified approvals:", error);
+            
+            // Try to show an error message in the approvals list
+            try {
+                const approvalsList = document.getElementById('approvals-list');
+                if (approvalsList) {
+                    approvalsList.innerHTML = `<div class="empty-list">Error rendering approvals: ${error.message}</div>`;
+                }
+            } catch (displayError) {
+                console.error("UIManager: Failed to display error message:", displayError);
+            }
+        }
     }
 };
 

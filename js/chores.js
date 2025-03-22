@@ -133,13 +133,39 @@ const ChoreManager = {
      * @param {string} choreId - ID of the chore to approve
      */
     approveChore(choreId) {
-        if (DataManager.approveChore(choreId)) {
-            UIManager.showToast('Labor approved by Zeus! Payment sent to treasury.', 'success');
+        console.log(`ChoreManager: Attempting to approve chore ${choreId}`);
+        
+        try {
+            // Check that DataManager exists and has approveChore method
+            if (!window.DataManager) {
+                console.error("ChoreManager: DataManager not found when approving chore");
+                UIManager.showToast('Error: Data manager not available', 'error');
+                return;
+            }
             
-            // Refresh UI - DataManager will automatically reset the chore status
-            UIManager.refreshAllData();
-        } else {
-            UIManager.showToast('Error approving labor!', 'error');
+            if (typeof DataManager.approveChore !== 'function') {
+                console.error("ChoreManager: DataManager.approveChore method not found");
+                UIManager.showToast('Error: Approval function not available', 'error');
+                return;
+            }
+            
+            // Call the DataManager method with detailed logging
+            console.log(`ChoreManager: Calling DataManager.approveChore for ${choreId}`);
+            const result = DataManager.approveChore(choreId);
+            console.log(`ChoreManager: DataManager.approveChore returned ${result}`);
+            
+            if (result) {
+                UIManager.showToast('Labor approved by Zeus! Payment sent to treasury.', 'success');
+                
+                // Refresh UI - DataManager will automatically reset the chore status
+                UIManager.refreshAllData();
+            } else {
+                console.error(`ChoreManager: Failed to approve chore ${choreId}`);
+                UIManager.showToast('Error approving labor!', 'error');
+            }
+        } catch (error) {
+            console.error("ChoreManager: Error in approveChore:", error);
+            UIManager.showToast(`Error approving labor: ${error.message}`, 'error');
         }
     },
     
@@ -148,14 +174,40 @@ const ChoreManager = {
      * @param {string} choreId - ID of the chore to reject
      */
     rejectChore(choreId) {
-        if (DataManager.rejectChore(choreId)) {
-            UIManager.showToast('Labor rejected by Zeus!', 'info');
+        console.log(`ChoreManager: Attempting to reject chore ${choreId}`);
+        
+        try {
+            // Check that DataManager exists and has rejectChore method
+            if (!window.DataManager) {
+                console.error("ChoreManager: DataManager not found when rejecting chore");
+                UIManager.showToast('Error: Data manager not available', 'error');
+                return;
+            }
             
-            // Refresh chore lists and approvals
-            UIManager.renderChores();
-            UIManager.renderUnifiedApprovals();
-        } else {
-            UIManager.showToast('Error rejecting labor!', 'error');
+            if (typeof DataManager.rejectChore !== 'function') {
+                console.error("ChoreManager: DataManager.rejectChore method not found");
+                UIManager.showToast('Error: Rejection function not available', 'error');
+                return;
+            }
+            
+            // Call the DataManager method with detailed logging
+            console.log(`ChoreManager: Calling DataManager.rejectChore for ${choreId}`);
+            const result = DataManager.rejectChore(choreId);
+            console.log(`ChoreManager: DataManager.rejectChore returned ${result}`);
+            
+            if (result) {
+                UIManager.showToast('Labor rejected by Zeus!', 'info');
+                
+                // Refresh chore lists and approvals
+                UIManager.renderChores();
+                UIManager.renderUnifiedApprovals();
+            } else {
+                console.error(`ChoreManager: Failed to reject chore ${choreId}`);
+                UIManager.showToast('Error rejecting labor!', 'error');
+            }
+        } catch (error) {
+            console.error("ChoreManager: Error in rejectChore:", error);
+            UIManager.showToast(`Error rejecting labor: ${error.message}`, 'error');
         }
     },
     
@@ -307,7 +359,41 @@ const ChoreManager = {
     }
 };
 
-// Initialize chore manager on load
+// When the document is fully loaded, initialize the ChoreManager
 document.addEventListener('DOMContentLoaded', () => {
-    ChoreManager.init();
+    console.log("ChoreManager: DOM content loaded, delaying initialization to ensure DataManager is ready");
+    
+    // Delay initialization slightly to ensure DataManager is fully loaded
+    setTimeout(() => {
+        console.log("ChoreManager: Initializing after delay");
+        if (window.DataManager) {
+            console.log("ChoreManager: DataManager found, initializing");
+            ChoreManager.init();
+        } else {
+            console.error("ChoreManager: DataManager not available after delay, will retry");
+            
+            // Retry in case DataManager is loaded later
+            setTimeout(() => {
+                console.log("ChoreManager: Retrying initialization");
+                if (window.DataManager) {
+                    console.log("ChoreManager: DataManager found on retry, initializing");
+                    ChoreManager.init();
+                } else {
+                    console.error("ChoreManager: DataManager still not available, manual initialization required");
+                    // Add a button to the UI to manually initialize if needed
+                    const parentControls = document.querySelector('.parent-controls');
+                    if (parentControls) {
+                        const initButton = document.createElement('button');
+                        initButton.innerText = 'Initialize Chores';
+                        initButton.classList.add('btn', 'btn-primary');
+                        initButton.onclick = () => {
+                            console.log("ChoreManager: Manual initialization triggered");
+                            ChoreManager.init();
+                        };
+                        parentControls.appendChild(initButton);
+                    }
+                }
+            }, 2000);
+        }
+    }, 500);
 }); 
