@@ -36,8 +36,21 @@ document.addEventListener('DOMContentLoaded', function() {
             DataManager.setFamilyId(familyCode);
         }
         
-        // Call the original method
-        originalLoginUser(userType);
+        // Save auth state to localStorage (needed for persistence)
+        const authState = {
+            currentUser: userType,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('olympusBankAuthState', JSON.stringify(authState));
+        
+        // Hide the password modal if it's open
+        const parentPasswordModal = document.getElementById('parent-password-modal');
+        if (parentPasswordModal) {
+            parentPasswordModal.classList.add('hidden');
+        }
+        
+        // Redirect to dashboard with role parameter
+        window.location.href = `index.html?role=${userType}`;
     };
     
     // Override the AuthManager.verifyParentPassword method to handle the new UI
@@ -51,11 +64,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            // Call the original method
-            originalVerifyPassword(password);
+            // Add the hideParentPasswordModal method if it doesn't exist
+            if (!this.hideParentPasswordModal) {
+                this.hideParentPasswordModal = function() {
+                    const modal = document.getElementById('parent-password-modal');
+                    if (modal) {
+                        modal.classList.add('hidden');
+                    }
+                };
+            }
+            
+            // Check if DataManager is available
+            if (!DataManager || typeof DataManager.verifyParentPassword !== 'function') {
+                console.error("DataManager.verifyParentPassword is not available");
+                UIManager.showToast('Authentication system error!', 'error');
+                return;
+            }
+            
+            console.log("Calling DataManager.verifyParentPassword with adapter");
+            if (DataManager.verifyParentPassword(password)) {
+                console.log("Password verification successful through adapter");
+                
+                // Hide the modal explicitly
+                const parentPasswordModal = document.getElementById('parent-password-modal');
+                if (parentPasswordModal) {
+                    parentPasswordModal.classList.add('hidden');
+                }
+                
+                // Login as parent
+                setTimeout(() => {
+                    this.loginUser('parent');
+                }, 100);
+            } else {
+                // Show error message
+                console.log("Password verification failed");
+                UIManager.showToast('Incorrect password. Zeus does not recognize you!', 'error');
+                const passwordInput = document.getElementById('password-input');
+                if (passwordInput) {
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            }
         } catch (error) {
             console.error('Error in verifyParentPassword:', error);
-            UIManager.showToast('Authentication error', 'error');
+            UIManager.showToast('Authentication error: ' + error.message, 'error');
         }
     };
     
@@ -136,9 +188,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Attempt to verify password
                 try {
                     console.log('Calling verifyParentPassword with password length:', password.length);
-                    setTimeout(() => {
-                        AuthManager.verifyParentPassword(password);
-                    }, 100);
+                    // Call the verification directly without setTimeout to avoid race conditions
+                    AuthManager.verifyParentPassword(password);
                 } catch (error) {
                     console.error('Error verifying parent password:', error);
                     UIManager.showToast('Authentication error', 'error');

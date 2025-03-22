@@ -1238,34 +1238,40 @@ const DataManager = {
     },
     
     /**
-     * Verify parent password
-     * @param {string} password - Password to verify
-     * @returns {boolean} Is valid
+     * Verify if the provided password matches the parent password
+     * @param {string} password - The password to verify
+     * @returns {boolean} True if password is valid
      */
     verifyParentPassword(password) {
-        try {
-            console.log('Verifying parent password, data exists:', !!this.data);
-            
-            if (!this.data) {
-                console.error('Data is null in verifyParentPassword');
-                return false;
-            }
-            
-            console.log('Stored parent password exists:', !!this.data.settings.parentPassword);
-            
-            // Make sure we have the settings object
-            if (!this.data.settings || typeof this.data.settings.parentPassword !== 'string') {
-                console.error('Invalid settings structure in verifyParentPassword');
-                return false;
-            }
-            
-            const result = this.data.settings.parentPassword === password;
-            console.log('Password verification result:', result);
-            return result;
-        } catch (error) {
-            console.error('Error verifying parent password:', error);
-            return false;
+        console.log('DataManager.verifyParentPassword called with password length:', password ? password.length : 0);
+        
+        // If no data exists yet, set the provided password as the parent password
+        if (!this.dataExists()) {
+            console.log('No data exists yet, setting initial parent password');
+            this.parentPassword = password;
+            this.saveData();
+            return true;
         }
+        
+        console.log('Verifying parent password, data exists:', this.dataExists());
+        
+        // Check if parent password exists
+        const storedPwExists = !!this.parentPassword;
+        console.log('Stored parent password exists:', storedPwExists);
+        
+        // If no parent password is set yet, set this as the password
+        if (!this.parentPassword) {
+            console.log('No parent password set yet, setting initial password');
+            this.parentPassword = password;
+            this.saveData();
+            return true;
+        }
+        
+        // Compare the provided password with the stored password
+        const isValid = (this.parentPassword === password);
+        console.log('Password verification result:', isValid);
+        
+        return isValid;
     },
     
     /**

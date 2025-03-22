@@ -16,47 +16,77 @@ const AuthManager = {
      */
     init() {
         try {
+            console.log("Initializing AuthManager...");
+            
             // Parent login button
-            document.getElementById('parent-login-btn').addEventListener('click', () => {
-                this.showParentPasswordModal();
-            });
+            const parentLoginBtn = document.getElementById('parent-login-btn');
+            if (parentLoginBtn) {
+                parentLoginBtn.addEventListener('click', () => {
+                    this.showParentPasswordModal();
+                });
+            } else {
+                console.log("Parent login button not found - likely using modernized UI");
+            }
             
             // Child login button (no password needed)
-            document.getElementById('child-login-btn').addEventListener('click', () => {
-                this.loginUser('child');
-            });
+            const childLoginBtn = document.getElementById('child-login-btn');
+            if (childLoginBtn) {
+                childLoginBtn.addEventListener('click', () => {
+                    this.loginUser('child');
+                });
+            } else {
+                console.log("Child login button not found - likely using modernized UI");
+            }
             
             // Password modal handlers
-            document.getElementById('submit-password-btn').addEventListener('click', () => {
-                this.verifyParentPassword();
-            });
+            const submitPwBtn = document.getElementById('submit-password-btn');
+            if (submitPwBtn) {
+                submitPwBtn.addEventListener('click', () => {
+                    this.verifyParentPassword();
+                });
+            }
             
-            document.getElementById('cancel-password-btn').addEventListener('click', () => {
-                this.hideParentPasswordModal();
-            });
+            const cancelPwBtn = document.getElementById('cancel-password-btn');
+            if (cancelPwBtn) {
+                cancelPwBtn.addEventListener('click', () => {
+                    this.hideParentPasswordModal();
+                });
+            }
             
             // Allow Enter key for password submission
-            document.getElementById('parent-password').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.verifyParentPassword();
-                }
-            });
+            const parentPw = document.getElementById('parent-password');
+            if (parentPw) {
+                parentPw.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.verifyParentPassword();
+                    }
+                });
+            }
             
-            // Logout buttons
-            document.getElementById('parent-logout-btn').addEventListener('click', () => {
-                this.logoutUser();
-            });
+            // Logout buttons - these might not exist on the login page
+            const parentLogoutBtn = document.getElementById('parent-logout-btn');
+            if (parentLogoutBtn) {
+                parentLogoutBtn.addEventListener('click', () => {
+                    this.logoutUser();
+                });
+            }
             
-            document.getElementById('child-logout-btn').addEventListener('click', () => {
-                this.logoutUser();
-            });
+            const childLogoutBtn = document.getElementById('child-logout-btn');
+            if (childLogoutBtn) {
+                childLogoutBtn.addEventListener('click', () => {
+                    this.logoutUser();
+                });
+            }
             
             // Password change form
-            document.getElementById('change-password-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.changeParentPassword();
-            });
+            const changePwForm = document.getElementById('change-password-form');
+            if (changePwForm) {
+                changePwForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.changeParentPassword();
+                });
+            }
             
             // Family code button
             const setFamilyCodeBtn = document.getElementById('set-family-code-btn');
@@ -103,6 +133,7 @@ const AuthManager = {
                 }
             }
             
+            console.log("AuthManager initialized successfully");
             return true;
         } catch (error) {
             console.error('Error initializing authentication:', error);
@@ -114,29 +145,81 @@ const AuthManager = {
      * Show the parent password modal
      */
     showParentPasswordModal() {
+        // Try both modern and legacy modal selectors
         const modal = document.getElementById('parent-password-modal');
-        modal.classList.add('active');
+        if (!modal) {
+            console.error("Parent password modal not found");
+            return;
+        }
+        
+        // Check which UI we're using (modern or legacy)
+        if (modal.classList.contains('active') !== undefined) {
+            // Legacy UI
+            modal.classList.add('active');
+        } else {
+            // Modern UI
+            modal.classList.remove('hidden');
+        }
         
         // Clear and focus password field
-        const passwordInput = document.getElementById('parent-password');
-        passwordInput.value = '';
-        passwordInput.focus();
+        const passwordInput = document.getElementById('parent-password') || 
+                             document.getElementById('password-input');
+        if (passwordInput) {
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
     },
     
     /**
      * Hide the parent password modal
      */
     hideParentPasswordModal() {
+        console.log("Hiding parent password modal");
+        // Try both modern and legacy modal selectors
         const modal = document.getElementById('parent-password-modal');
-        modal.classList.remove('active');
+        if (!modal) {
+            console.error("Parent password modal not found");
+            return;
+        }
+        
+        // Check which UI we're using (modern or legacy)
+        if (typeof modal.classList.contains === 'function' && 
+            typeof modal.classList.remove === 'function') {
+            
+            if (modal.classList.contains('active')) {
+                // Legacy UI
+                modal.classList.remove('active');
+            } else {
+                // Modern UI
+                modal.classList.add('hidden');
+            }
+        } else {
+            console.error("Modal element exists but classList methods are unavailable");
+        }
     },
     
     /**
      * Verify the entered parent password
      */
-    verifyParentPassword() {
-        const passwordInput = document.getElementById('parent-password');
-        const password = passwordInput.value.trim();
+    verifyParentPassword(providedPassword = null) {
+        // Get password from input element or use provided password
+        let password = providedPassword;
+        
+        if (!password) {
+            // Try both modern and legacy password input selectors
+            const passwordInput = document.getElementById('parent-password') || 
+                                 document.getElementById('password-input');
+            
+            if (!passwordInput) {
+                console.error("Password input element not found");
+                if (UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast('Authentication system error!', 'error');
+                }
+                return;
+            }
+            
+            password = passwordInput.value.trim();
+        }
         
         try {
             console.log("Verifying parent password...");
@@ -149,33 +232,66 @@ const AuthManager = {
             // Check if password is empty
             if (!password) {
                 console.log("Password is empty");
-                UIManager.showToast('Password cannot be empty!', 'error');
-                passwordInput.focus();
+                if (UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast('Password cannot be empty!', 'error');
+                }
+                // Focus password input if possible
+                const passwordInput = document.getElementById('parent-password') || 
+                                     document.getElementById('password-input');
+                if (passwordInput) {
+                    passwordInput.focus();
+                }
                 return;
             }
             
             // Check if DataManager is available
             if (!DataManager || typeof DataManager.verifyParentPassword !== 'function') {
                 console.error("DataManager.verifyParentPassword is not available");
-                UIManager.showToast('Authentication system error!', 'error');
+                if (UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast('Authentication system error!', 'error');
+                }
                 return;
             }
             
             console.log("Calling DataManager.verifyParentPassword");
             if (DataManager.verifyParentPassword(password)) {
                 console.log("Password verification successful");
-                this.hideParentPasswordModal();
+                // Ensure the hideParentPasswordModal method exists
+                if (typeof this.hideParentPasswordModal === 'function') {
+                    this.hideParentPasswordModal();
+                } else {
+                    console.log("hideParentPasswordModal function not available");
+                    // Try direct DOM manipulation as fallback
+                    const modal = document.getElementById('parent-password-modal');
+                    if (modal) {
+                        if (modal.classList.contains('active')) {
+                            modal.classList.remove('active');
+                        } else {
+                            modal.classList.add('hidden');
+                        }
+                    }
+                }
                 this.loginUser('parent');
             } else {
                 // Show error message
                 console.log("Password verification failed");
-                UIManager.showToast('Incorrect password. Zeus does not recognize you!', 'error');
-                passwordInput.value = '';
-                passwordInput.focus();
+                if (UIManager && typeof UIManager.showToast === 'function') {
+                    UIManager.showToast('Incorrect password. Zeus does not recognize you!', 'error');
+                }
+                
+                // Clear and focus password input if possible
+                const passwordInput = document.getElementById('parent-password') || 
+                                     document.getElementById('password-input');
+                if (passwordInput) {
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
             }
         } catch (error) {
             console.error("Error during password verification:", error);
-            UIManager.showToast('An error occurred during authentication.', 'error');
+            if (UIManager && typeof UIManager.showToast === 'function') {
+                UIManager.showToast('An error occurred during authentication.', 'error');
+            }
         }
     },
     
