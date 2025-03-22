@@ -621,12 +621,13 @@ const DataManager = {
     },
     
     /**
-     * Add a pending transaction request
-     * @param {object} transaction - Transaction object
+     * Add a pending transaction (requires approval)
+     * @param {object} transaction - Transaction to add
      * @returns {boolean} Success status
      */
     addPendingTransaction(transaction) {
         try {
+            console.log("Adding pending transaction for approval");
             if (!this.data) return false;
             
             // Add description if it's missing
@@ -638,32 +639,56 @@ const DataManager = {
                 }
             }
             
-            // Validate transaction
+            // Validate the transaction
             const validation = Utils.validateTransaction(transaction);
             if (!validation.valid) {
-                console.error('Invalid pending transaction:', validation.errors);
+                console.error('Invalid transaction:', validation.errors);
                 return false;
             }
             
-            // Add ID and timestamp if not present
+            // Set pending flag and add ID if not present
+            transaction.pending = true;
+            
             if (!transaction.id) {
                 transaction.id = Utils.generateId();
             }
             
+            // Add timestamps
             if (!transaction.date) {
                 transaction.date = new Date().toISOString();
             }
-            
-            // Mark as pending
-            transaction.pending = true;
+            transaction.requestDate = new Date().toISOString();
             
             // Add to pending transactions
             this.data.pendingTransactions.unshift(transaction);
+            console.log("Pending transaction added:", transaction);
             
-            console.log('Successfully added pending transaction:', transaction);
-            console.log('All pending transactions:', this.data.pendingTransactions);
+            // Save data locally first
+            const localSaveSuccess = this.saveData();
             
-            return this.saveData();
+            // Then immediately force sync with Firebase
+            if (window.isFirebaseConnected && window.firebase && window.db) {
+                console.log("Firebase connected, forcing immediate cloud sync for pending transaction");
+                
+                // Push pending transaction to Firebase immediately 
+                this._forceSyncToFirebase().then(cloudSuccess => {
+                    if (cloudSuccess) {
+                        console.log("Pending transaction successfully synced to cloud");
+                        // Trigger cross-browser sync to update other tabs/devices
+                        this._triggerSyncToOtherTabs();
+                    } else {
+                        console.warn("Cloud sync for pending transaction failed, using local sync only");
+                    }
+                }).catch(error => {
+                    console.error("Error syncing pending transaction to cloud:", error);
+                });
+            } else {
+                console.log("Firebase not connected, using local sync only for pending transaction");
+                // Just trigger local sync to other tabs
+                this._triggerSyncToOtherTabs();
+            }
+            
+            return localSaveSuccess;
         } catch (error) {
             console.error('Error adding pending transaction:', error);
             return false;
@@ -735,139 +760,14 @@ const DataManager = {
     },
     
     /**
-     * Approve a pending transaction
-     * @param {string} transactionId - ID of the transaction to approve
-     * @returns {boolean} Success status
-     */
-    approvePendingTransaction(transactionId) {
-        try {
-            if (!this.data) return false;
-            
-            // Find the pending transaction
-            const index = this.data.pendingTransactions.findIndex(t => t.id === transactionId);
-            if (index === -1) {
-                console.warn(`Pending transaction with ID ${transactionId} not found.`);
-                return false;
-            }
-            
-            // Get the transaction
-            const transaction = { ...this.data.pendingTransactions[index] };
-            
-            // Remove pending flag
-            transaction.pending = false;
-            
-            // Add approval date
-            transaction.approvedDate = new Date().toISOString();
-            
-            // Remove from pending transactions
-            this.data.pendingTransactions.splice(index, 1);
-            
-            // Add to regular transactions
-            this.data.transactions.unshift(transaction);
-            
-            // Update balance
-            const amount = transaction.amount || 0;
-            if (transaction.type === 'deposit') {
-                this.data.balance += amount;
-            } else if (transaction.type === 'withdrawal') {
-                this.data.balance -= amount;
-            }
-            
-            // Ensure balance has at most 2 decimal places
-            this.data.balance = parseFloat(this.data.balance.toFixed(2));
-            
-            return this.saveData();
-        } catch (error) {
-            console.error('Error approving pending transaction:', error);
-            return false;
-        }
-    },
-    
-    /**
-     * Reject a pending transaction
-     * @param {string} transactionId - ID of the transaction to reject
-     * @returns {boolean} Success status
-     */
-    rejectPendingTransaction(transactionId) {
-        try {
-            if (!this.data) return false;
-            
-            // Find the pending transaction
-            const index = this.data.pendingTransactions.findIndex(t => t.id === transactionId);
-            if (index === -1) {
-                console.warn(`Pending transaction with ID ${transactionId} not found.`);
-                return false;
-            }
-            
-            // Remove from pending transactions
-            this.data.pendingTransactions.splice(index, 1);
-            
-            return this.saveData();
-        } catch (error) {
-            console.error('Error rejecting pending transaction:', error);
-            return false;
-        }
-    },
-    
-    /**
-     * Add a chore
-     * @param {object} chore - Chore object
-     * @returns {boolean} Success status
-     */
-    addChore(chore) {
-        try {
-            if (!this.data) return false;
-            
-            // Validate chore
-            const validation = Utils.validateChore(chore);
-            if (!validation.valid) {
-                console.error('Invalid chore:', validation.errors);
-                return false;
-            }
-            
-            // Add ID if not present
-            if (!chore.id) {
-                chore.id = Utils.generateId();
-            }
-            
-            // Set initial states if not present
-            chore.completed = chore.completed || false;
-            chore.pending = chore.pending || false;
-            
-            // Add chore
-            this.data.chores.push(chore);
-            
-            return this.saveData();
-        } catch (error) {
-            console.error('Error adding chore:', error);
-            return false;
-        }
-    },
-    
-    /**
-     * Get all chores
-     * @returns {array} Array of chores
-     */
-    getChores() {
-        if (!this.data) return [];
-        
-        try {
-            // Return a copy to prevent accidental modification
-            return JSON.parse(JSON.stringify(this.data.chores));
-        } catch (error) {
-            console.error('Error getting chores:', error);
-            return [];
-        }
-    },
-    
-    /**
-     * Mark a chore as completed (pending approval)
+     * Complete a chore (mark as pending for approval)
      * @param {string} choreId - ID of the chore to complete
      * @param {number} eventCount - Number of events completed
      * @returns {boolean} Success status
      */
     completeChore(choreId, eventCount = 1) {
         try {
+            console.log(`Marking chore ${choreId} as pending with ${eventCount} events`);
             if (!this.data) return false;
             
             // Find the chore
@@ -882,9 +782,60 @@ const DataManager = {
             chore.completedDate = new Date().toISOString();
             chore.eventCount = eventCount;
             
-            return this.saveData();
+            // Save data with forced Firebase sync to ensure pending chores appear across devices
+            console.log(`Saving chore ${choreId} with pending status and forcing cloud sync`);
+            
+            // Save data locally first
+            const localSaveSuccess = this.saveData();
+            
+            // Then immediately force sync with Firebase
+            if (window.isFirebaseConnected && window.firebase && window.db) {
+                console.log("Firebase connected, forcing immediate cloud sync for pending chore");
+                
+                // Push pending chore to Firebase immediately 
+                this._forceSyncToFirebase().then(cloudSuccess => {
+                    if (cloudSuccess) {
+                        console.log("Pending chore successfully synced to cloud");
+                        // Trigger cross-browser sync to update other tabs/devices
+                        this._triggerSyncToOtherTabs();
+                    } else {
+                        console.warn("Cloud sync for pending chore failed, using local sync only");
+                    }
+                }).catch(error => {
+                    console.error("Error syncing pending chore to cloud:", error);
+                });
+            } else {
+                console.log("Firebase not connected, using local sync only for pending chore");
+                // Just trigger local sync to other tabs
+                this._triggerSyncToOtherTabs();
+            }
+            
+            return localSaveSuccess;
         } catch (error) {
             console.error('Error completing chore:', error);
+            return false;
+        }
+    },
+    
+    /**
+     * Force sync current data to Firebase
+     * @private
+     * @returns {Promise<boolean>} Success status
+     */
+    async _forceSyncToFirebase() {
+        try {
+            if (!this.data) return false;
+            if (!window.isFirebaseConnected || !window.firebase || !window.db) return false;
+            
+            console.log("Forcing sync to Firebase...");
+            
+            // Push current data to Firebase
+            await db.collection('olympus_families').doc(this.familyId).set(this.data);
+            console.log("Data successfully pushed to Firebase");
+            
+            return true;
+        } catch (error) {
+            console.error("Error pushing data to Firebase:", error);
             return false;
         }
     },
@@ -896,6 +847,7 @@ const DataManager = {
      */
     approveChore(choreId) {
         try {
+            console.log(`Approving chore ${choreId}`);
             if (!this.data) return false;
             
             // Find the chore
@@ -942,7 +894,32 @@ const DataManager = {
             delete chore.completedDate;
             delete chore.eventCount;
             
-            return this.saveData();
+            // Save data locally first
+            const localSaveSuccess = this.saveData();
+            
+            // Then immediately force sync with Firebase
+            if (window.isFirebaseConnected && window.firebase && window.db) {
+                console.log("Firebase connected, forcing immediate cloud sync for approved chore");
+                
+                // Push approved chore to Firebase immediately 
+                this._forceSyncToFirebase().then(cloudSuccess => {
+                    if (cloudSuccess) {
+                        console.log("Approved chore successfully synced to cloud");
+                        // Trigger cross-browser sync to update other tabs/devices
+                        this._triggerSyncToOtherTabs();
+                    } else {
+                        console.warn("Cloud sync for approved chore failed, using local sync only");
+                    }
+                }).catch(error => {
+                    console.error("Error syncing approved chore to cloud:", error);
+                });
+            } else {
+                console.log("Firebase not connected, using local sync only for approved chore");
+                // Just trigger local sync to other tabs
+                this._triggerSyncToOtherTabs();
+            }
+            
+            return localSaveSuccess;
         } catch (error) {
             console.error('Error approving chore:', error);
             return false;
@@ -956,6 +933,7 @@ const DataManager = {
      */
     rejectChore(choreId) {
         try {
+            console.log(`Rejecting chore ${choreId}`);
             if (!this.data) return false;
             
             // Find the chore
@@ -970,7 +948,32 @@ const DataManager = {
             delete chore.completedDate;
             delete chore.eventCount;
             
-            return this.saveData();
+            // Save data locally first
+            const localSaveSuccess = this.saveData();
+            
+            // Then immediately force sync with Firebase
+            if (window.isFirebaseConnected && window.firebase && window.db) {
+                console.log("Firebase connected, forcing immediate cloud sync for rejected chore");
+                
+                // Push rejected chore to Firebase immediately 
+                this._forceSyncToFirebase().then(cloudSuccess => {
+                    if (cloudSuccess) {
+                        console.log("Rejected chore successfully synced to cloud");
+                        // Trigger cross-browser sync to update other tabs/devices
+                        this._triggerSyncToOtherTabs();
+                    } else {
+                        console.warn("Cloud sync for rejected chore failed, using local sync only");
+                    }
+                }).catch(error => {
+                    console.error("Error syncing rejected chore to cloud:", error);
+                });
+            } else {
+                console.log("Firebase not connected, using local sync only for rejected chore");
+                // Just trigger local sync to other tabs
+                this._triggerSyncToOtherTabs();
+            }
+            
+            return localSaveSuccess;
         } catch (error) {
             console.error('Error rejecting chore:', error);
             return false;
